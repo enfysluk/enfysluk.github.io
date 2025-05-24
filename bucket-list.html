@@ -108,7 +108,7 @@ function renderList(){
     const span = document.createElement('span');
     span.textContent = item;
     const delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete';
+    delBtn.textContent = 'x';
     delBtn.className = 'delete';
     delBtn.onclick = () => {
       todoList.splice(i,1);
