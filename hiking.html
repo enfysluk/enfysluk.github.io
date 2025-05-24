@@ -2,82 +2,164 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hiking Trails</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hiking Adventures | Enfys Travel</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
     body {
-      font-family: Georgia, serif;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 20px;
-      background-color: white;
-      color: #222;
-      line-height: 1.6;
+      font-family: 'Open Sans', Arial, sans-serif;
+      margin: 0; padding: 0;
+      background-color: #f4faf3;
+      color: #1a1a1a;
     }
 
-    h1, h2 {
+    header {
+      background-color: #2e7d32;
+      color: #fff;
+      padding: 1rem 2rem;
       text-align: center;
-      font-weight: normal;
-      color: #222;
     }
 
-    a {
-      color: #005f73;
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #388e3c;
+      padding: 0.5rem 0;
+      gap: 1.2rem;
+    }
+    nav a {
+      color: #dcedc8;
       text-decoration: none;
+      font-weight: 600;
     }
-
-    a:hover {
+    nav a:hover {
+      color: #f1f8e9;
       text-decoration: underline;
     }
 
+    main {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    section {
+      margin-bottom: 3rem;
+    }
+    h1, h2 {
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      border-bottom: 2px solid #2e7d32;
+      padding-bottom: 0.3rem;
+      margin-bottom: 1rem;
+    }
+
     ul {
-      list-style: disc;
-      margin-left: 20px;
+      list-style-type: disc;
+      padding-left: 1.2rem;
+      line-height: 1.6;
+    }
+    li {
+      margin-bottom: 0.4rem;
     }
 
     footer {
       text-align: center;
-      font-size: 0.85em;
-      margin-top: 40px;
-      color: #666;
+      font-size: 0.9rem;
+      padding: 1rem 0;
+      color: #647a54;
+      border-top: 1px solid #ccc;
+      margin-top: 3rem;
     }
+
+    .back-home {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 1rem;
+    }
+    .back-home a {
+      color: #2e7d32;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-home a:hover {
+      text-decoration: underline;
+    }
+
   </style>
 </head>
 <body>
-  <h1>Hiking Around the World</h1>
 
-  <p>Whether it’s scaling alpine peaks or wandering desert canyons, hiking offers a deep connection with nature. Here are some of my favorite hikes and tips to get started.</p>
+<header>
+  <h1>Hiking Adventures</h1>
+  <p>Discover the best hiking trails, gear, and travel tips</p>
+</header>
 
-  <h2>Top Trails</h2>
-  <ul>
-    <li><strong>Peru (Inca Trail):</strong> A historic hike to Machu Picchu.</li>
-    <li><strong>Nepal (Annapurna Circuit):</strong> Himalayan vistas with cultural villages.</li>
-    <li><strong>USA (John Muir Trail):</strong> A stunning traverse of the Sierra Nevada.</li>
-    <li><strong>New Zealand (Routeburn Track):</strong> Lush rainforest to alpine ridges.</li>
-  </ul>
+<nav>
+  <a href="index.html">Home</a>
+  <a href="#destinations">Destinations</a>
+  <a href="#gear">Gear</a>
+  <a href="#tips">Travel Tips</a>
+</nav>
 
-  <h2>Recommended Gear</h2>
-  <ul>
-    <li>Lightweight hiking boots or trail runners</li>
-    <li>Backpack (30–50L for multi-day hikes)</li>
-    <li>Water filter or purification tablets</li>
-    <li>Trekking poles (especially for descents)</li>
-    <li>Quick-dry clothing and a good rain jacket</li>
-  </ul>
+<main>
+  <section id="destinations">
+    <h2>Destinations 🏞️</h2>
+    <ul>
+      <li><strong>Torres del Paine National Park, Chile</strong> – Iconic Patagonian trek with breathtaking mountains and glaciers.</li>
+      <li><strong>Appalachian Trail, USA</strong> – Over 2,000 miles of continuous trail through eastern US wilderness.</li>
+      <li><strong>Inca Trail, Peru</strong> – Historic trail ending at Machu Picchu, rich in culture and scenery.</li>
+      <li><strong>Camino de Santiago, Spain</strong> – Ancient pilgrimage route with diverse landscapes and culture.</li>
+      <li><strong>Milford Track, New Zealand</strong> – Stunning fjordland trek with lush rainforests and waterfalls.</li>
+      <li><strong>Mount Kilimanjaro, Tanzania</strong> – Highest peak in Africa, a challenging but rewarding hike.</li>
+      <li><strong>Snowdonia, Wales</strong> – Beautiful mountain range with diverse hiking routes and local history.</li>
+      <li><strong>Grand Canyon Rim-to-Rim, USA</strong> – Epic trek crossing one of the world’s most famous natural wonders.</li>
+    </ul>
+  </section>
 
-  <h2>Travel Tips</h2>
-  <ul>
-    <li><strong>Flights:</strong> Plan around shoulder seasons (spring/fall) for better weather and prices.</li>
-    <li><strong>Accommodation:</strong> Many hikes offer refuges, teahouses, or require tents—check regulations.</li>
-    <li><strong>Permits:</strong> Popular trails may need permits months in advance (e.g., Inca Trail).</li>
-    <li><strong>Navigation:</strong> Download offline maps (Maps.me, Gaia GPS) before departure.</li>
-  </ul>
+  <section id="gear">
+    <h2>Gear 🎒</h2>
+    <ul>
+      <li>Comfortable, sturdy hiking boots with good grip</li>
+      <li>Weather-appropriate clothing (layers, waterproof jacket)</li>
+      <li>Backpack with hydration system or water bottles</li>
+      <li>Navigation tools: map, compass, GPS device or app</li>
+      <li>Sun protection: hat, sunglasses, sunscreen</li>
+      <li>First aid kit and emergency supplies</li>
+      <li>Trekking poles for stability</li>
+      <li>Snacks and lightweight, nutritious food</li>
+    </ul>
+  </section>
 
-  <p style="text-align: center; margin-top: 40px;">
+  <section id="tips">
+    <h2>Travel Tips 🗺️</h2>
+    <ul>
+      <li>Plan hikes according to your fitness and experience level.</li>
+      <li>Check local weather and trail conditions before you go.</li>
+      <li>Book accommodations early in popular hiking areas.</li>
+      <li>Consider guided hikes for remote or challenging trails.</li>
+      <li>Carry enough water and know where to refill on trail.</li>
+      <li>Respect local customs, wildlife, and environment.</li>
+      <li>Travel insurance covering outdoor activities is recommended.</li>
+    </ul>
+  </section>
+
+  <div class="back-home">
     <a href="index.html">← Back to Home</a>
-  </p>
-  <footer>
-    <p>© 2025 Enfys Travel. All rights reserved.</p>
-  </footer>
+  </div>
+</main>
+
+<footer>
+  <p>© 2025 Enfys | All content and images by me. Reuse allowed with credit.</p>
+</footer>
+
 </body>
 </html>
