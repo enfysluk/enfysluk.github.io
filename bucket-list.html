@@ -1,314 +1,468 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Bucket List</title>
 <style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+  h1 { text-align: center; }
+  input[type=text] { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
+  button { padding: 8px 16px; margin: 5px 5px 5px 0; cursor: pointer; }
   ul { list-style: none; padding: 0; }
-  li { margin-bottom: 6px; display: flex; align-items: center; }
-  li span.index {
-    width: 30px;
-    display: inline-block;
-    font-weight: bold;
+  li { padding: 5px 0; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
+  li.done span { text-decoration: line-through; color: gray; }
+  .btn-small { font-size: 0.9em; padding: 4px 8px; }
+  #buttonsContainer { margin-bottom: 10px; position: relative; }
+  #exportMenu {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    display: none;
+    padding: 5px;
+    z-index: 10;
+    right: 0;
   }
-  button.delete {
-    margin-left: 10px;
-    color: red;
-    background: none;
-    border: none;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 0 4px;
-    line-height: 1;
-    user-select: none;
+  #exportMenu button {
+    display: block;
+    width: 100%;
+    margin: 3px 0;
   }
-  button.delete:hover {
-    color: darkred;
-  }
-  input[type="text"] {
-    flex-grow: 1;
-    font-size: 16px;
-    padding: 4px 6px;
+  #importInput {
+    display: none;
   }
 </style>
 </head>
 <body>
 
-<h1 id="title">My Bucket List ✅</h1>
+<input type="text" id="userNameInput" placeholder="Enter your name" style="width: 60%; display: block; margin: 0 auto;" />
 
-<input type="text" id="userNameInput" placeholder="Enter your name" />
-<button id="setNameBtn">Set Name</button>
+<h1><span id="userNameDisplay">My bucket list</span></h1>
 
-<div style="margin-top:15px; display: flex; gap: 6px;">
-  <input type="text" id="newItemInput" placeholder="Add new item" />
-  <button id="addBtn">Add Item</button>
+
+<label for="newTodoInput">Add new todo:</label>
+<div style="display: flex; gap: 5px;">
+  <input type="text" id="newTodoInput" placeholder="Enter new task and press Enter" style="flex: 1;" />
+  <button id="addTodoBtn">+</button>
 </div>
 
-<h2>To Do</h2>
+<!-- 按钮组，放到Todo列表上面 -->
+<div id="buttonsContainer">
+  <button id="clearBtn" class="btn-small">Reset</button>
+  <button id="randomBtn" class="btn-small">Random</button>
+  <button id="importBtn" class="btn-small">Import</button>
+  <input type="file" id="importInput" accept=".txt,.xls,.xlsx" />
+  <button id="exportBtn" class="btn-small">Export</button>
+  <div id="exportMenu">
+    <button id="exportTxtBtn">Export as TXT</button>
+    <button id="exportImageBtn">Export as PNG</button>
+  </div>
+</div>
+
+<h2>Todo List</h2>
 <ul id="todoList"></ul>
 
-<h2>Completed</h2>
+<h2>Done List</h2>
 <ul id="doneList"></ul>
 
-<button id="clearBtn">Clear All (Reset)</button>
-
-<div style="margin-top:20px;">
-  <input type="file" id="importFile" accept=".txt" style="display:none" />
-  <button id="importBtn">Import</button>
-  <button id="exportBtn">Export</button>
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const STORAGE_KEY = 'bucketListData';
+const STORAGE_KEY = 'my_todo_list_data';
+const defaultTodosPool = [
+  "Make a standard matcha using tools",
+  "Make coffee latte art with leaf pattern",
+  "Turn off phone for 48 hours without contacting anyone",
+  "Draw a self-portrait",
+  "Wreck diving",
+  "Get a seaman certificate",
+  "Volunteer in Antarctica once",
+  "Dive off a platform",
+  "Learn Thomas spin (Thomas-style figure skating spin)",
+  "Do 10 standard pull-ups",
+  "Build “pumpkin shoulders”",
+  "Travel around the world in 80 days",
+  "Build a personal website and do SEO",
+  "Develop and publish an app (iOS)",
+  "Write 10 travelogues",
+  "Learn meditation",
+  "Publish a book/travelogue",
+  "Make a movie",
+  "Chat in Japanese all afternoon",
+  "See Northern Lights and ski in Scandinavia",
+  "Live in Japan for 3 months",
+  "Learn a magic trick",
+  "Pick mushrooms once",
+  "Learn Morse code",
+  "Skydive",
+  "Jump off a bridge",
+  "Volunteer far away",
+  "Go on a campervan trip",
+  "Fold an animal by origami",
+  "Watch whales in the wild",
+  "Learn juggling",
+  "Ride a Harley with a passenger",
+  "Drive a dune buggy",
+  "Zipline once",
+  "Plant a tree",
+  "Learn to cook grilled fish, skewers, Sichuan cuisine",
+  "Go deep-sea fishing with old friends and cook grilled fish",
+  "Survive alone on a deserted island or catch mantis shrimp/lobster",
+  "Experience level 10 loneliness",
+  "Take a surprise trip (decide destination at airport)",
+  "Explore a haunted house",
+  "Roast marshmallows once",
+  "Go to a carnival / running of the bulls / tomato festival",
+  "Set up a street stall",
+  "Successfully do a handstand or headstand",
+  "Play “Diver Dave”",
+  "Spend a night on a cliff (Peru)",
+  "Fly a plane once",
+  "Raise a chameleon",
+  "Learn nutrition and wellness coaching",
+  "CPR + AED training",
+  "Make a standard chamoyada",
+  "Learned backflip",
+  "Cliff diving",
+  "Dye hair pink / grey / rainbow / afro",
+  "Learn dermatology knowledge",
+  "Go on a food lover’s pilgrimage",
+  "Ride hot balloon",
+  "Went to an active volcano",
+  "Went to a desert",
+  "Visited a cave",
+  "Saw a castle",
+  "Caught a fish",
+  "Did bungee jumping",
+  "White-water rafting",
+  "Went on safari",
+  "Camped under dragon blood tree"
+];
+
 let todoList = [];
 let doneList = [];
 let userName = '';
 
 const userNameInput = document.getElementById('userNameInput');
-const setNameBtn = document.getElementById('setNameBtn');
-const title = document.getElementById('title');
-const newItemInput = document.getElementById('newItemInput');
-const addBtn = document.getElementById('addBtn');
-const todoListElem = document.getElementById('todoList');
-const doneListElem = document.getElementById('doneList');
+const userNameDisplay = document.getElementById('userNameDisplay');
+const newTodoInput = document.getElementById('newTodoInput');
+const todoUl = document.getElementById('todoList');
+const doneUl = document.getElementById('doneList');
 const clearBtn = document.getElementById('clearBtn');
-const importBtn = document.getElementById('importBtn');
-const importFile = document.getElementById('importFile');
+const randomBtn = document.getElementById('randomBtn');
 const exportBtn = document.getElementById('exportBtn');
+const exportMenu = document.getElementById('exportMenu');
+const exportTxtBtn = document.getElementById('exportTxtBtn');
+const exportImageBtn = document.getElementById('exportImageBtn');
+const importBtn = document.getElementById('importBtn');
+const importInput = document.getElementById('importInput');
 
-const defaultTodo = ["Make a chamoyada","Turn off phone 48h","Draw a self-portrait"];
-const defaultDone = ["Ride a hot air balloon","Went on safari"];
-
-function saveData(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    userName,
-    todoList,
-    doneList
-  }));
+function saveData() {
+  const data = { userName, todoList, doneList };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-function loadData(){
+function loadData() {
   const dataStr = localStorage.getItem(STORAGE_KEY);
-  if(dataStr){
-    try{
+  if (dataStr) {
+    try {
       const data = JSON.parse(dataStr);
       userName = data.userName || '';
-      todoList = Array.isArray(data.todoList) ? data.todoList : [...defaultTodo];
-      doneList = Array.isArray(data.doneList) ? data.doneList : [...defaultDone];
-    }catch{
+      todoList = Array.isArray(data.todoList) && data.todoList.length ? data.todoList : defaultTodosPool.slice(0,3);
+      doneList = Array.isArray(data.doneList) && data.doneList.length ? data.doneList : ["Ride a hot air balloon", "Went on safari"];
+    } catch {
       userName = '';
-      todoList = [...defaultTodo];
-      doneList = [...defaultDone];
+      todoList = defaultTodosPool.slice(0,3);
+      doneList = ["Ride a hot air balloon", "Went on safari"];
     }
-  }else{
+  } else {
     userName = '';
-    todoList = [...defaultTodo];
-    doneList = [...defaultDone];
+    todoList = defaultTodosPool.slice(0,3);
+    doneList = ["Ride a hot air balloon", "Went on safari"];
   }
   userNameInput.value = userName;
-  updateTitle();
-}
-
-function updateTitle(){
-  title.textContent = userName ? `${userName}'s Bucket List ✅` : 'My Bucket List ✅';
-}
-
-function renderList(){
-  todoListElem.innerHTML = '';
-  todoList.forEach((item, i) => {
-    const li = document.createElement('li');
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.addEventListener('change', ()=>{
-      if(checkbox.checked){
-        doneList.push(item);
-        todoList.splice(i,1);
-        saveData();
-        renderList();
-      }
-    });
-
-    const indexSpan = document.createElement('span');
-    indexSpan.textContent = (i + 1) + '.';
-    indexSpan.className = 'index';
-
-    const span = document.createElement('span');
-    span.textContent = item;
-    span.style.flexGrow = '1';
-
-    const delBtn = document.createElement('button');
-    delBtn.textContent = 'x';
-    delBtn.className = 'delete';
-    delBtn.onclick = () => {
-      todoList.splice(i,1);
-      saveData();
-      renderList();
-    };
-
-    li.appendChild(checkbox);
-    li.appendChild(indexSpan);
-    li.appendChild(span);
-    li.appendChild(delBtn);
-    todoListElem.appendChild(li);
-  });
-
-  doneListElem.innerHTML = '';
-  doneList.forEach((item, i) => {
-    const li = document.createElement('li');
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = true;
-    checkbox.addEventListener('change', ()=>{
-      if(!checkbox.checked){
-        todoList.push(item);
-        doneList.splice(i,1);
-        saveData();
-        renderList();
-      }
-    });
-
-    const indexSpan = document.createElement('span');
-    indexSpan.textContent = (i + 1) + '.';
-    indexSpan.className = 'index';
-
-    const span = document.createElement('span');
-    span.textContent = item;
-    span.style.flexGrow = '1';
-
-    const delBtn = document.createElement('button');
-    delBtn.textContent = 'x';
-    delBtn.className = 'delete';
-    delBtn.onclick = () => {
-      doneList.splice(i,1);
-      saveData();
-      renderList();
-    };
-
-    li.appendChild(checkbox);
-    li.appendChild(indexSpan);
-    li.appendChild(span);
-    li.appendChild(delBtn);
-    doneListElem.appendChild(li);
-  });
-}
-
-setNameBtn.addEventListener('click', () => {
-  userName = userNameInput.value.trim();
-  updateTitle();
-  saveData();
-});
-
-addBtn.addEventListener('click', () => {
-  const val = newItemInput.value.trim();
-  if(val){
-    todoList.push(val);
-    newItemInput.value = '';
-    saveData();
-    renderList();
-  }
-});
-
-clearBtn.addEventListener('click', () => {
-  if(confirm('Clear all and reset to default?')){
-    userName = '';
-    userNameInput.value = '';
-    todoList = [...defaultTodo];
-    doneList = [...defaultDone];
-    updateTitle();
-    saveData();
-    renderList();
-  }
-});
-
-importBtn.addEventListener('click', () => {
-  importFile.click();
-});
-
-importFile.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    parseImport(reader.result);
-  };
-  reader.readAsText(file);
-  importFile.value = '';
-});
-
-function parseImport(text){
-  let lines = text.split(/\r?\n/);
-  let newUser = '';
-  let newTodo = [];
-  let newDone = [];
-  let section = '';
-
-  for(let line of lines){
-    line = line.trim();
-    if(line.toLowerCase().endsWith("bucket list")){
-      let m = line.match(/^(.+?)'s bucket list$/i);
-      if(m) newUser = m[1];
-      continue;
-    }
-    if(line.toLowerCase() === 'things to do:' || line.toLowerCase() === 'things to do'){
-      section = 'todo';
-      continue;
-    }
-    if(line.toLowerCase() === 'completed:' || line.toLowerCase() === 'completed'){
-      section = 'done';
-      continue;
-    }
-    if(line === '' || line.toLowerCase().startsWith('exported on')) continue;
-
-    line = line.replace(/^\d+\.\s*/, '');
-    if(section === 'todo' && line) newTodo.push(line);
-    if(section === 'done' && line) newDone.push(line);
-  }
-
-  userName = newUser;
-  userNameInput.value = newUser;
-  todoList = newTodo.length ? newTodo : [];
-  doneList = newDone.length ? newDone : [];
-  updateTitle();
-  saveData();
+  updateUserNameDisplay();
   renderList();
 }
 
-exportBtn.addEventListener('click', () => {
-  let lines = [];
-  if(userName){
-    lines.push(`${userName}'s Bucket List`);
-  } else {
-    lines.push('My Bucket List');
-  }
-  lines.push(`Exported on: ${new Date().toLocaleDateString()}`);
-  lines.push('');
-  lines.push('Things to Do:');
-  todoList.forEach((item,i) => {
-    lines.push(`${i+1}. ${item}`);
-  });
-  lines.push('');
-  lines.push('Completed:');
-  doneList.forEach((item,i) => {
-    lines.push(`${i+1}. ${item}`);
+function updateUserNameDisplay() {
+  userNameDisplay.textContent = userName ? `${userName} Bucket List` : 'My bucket list';
+}
+
+function renderList() {
+  todoUl.innerHTML = '';
+  doneUl.innerHTML = '';
+
+  todoList.forEach((todo, idx) => {
+    const li = document.createElement('li');
+    li.className = 'todo-item';
+
+    const btnTick = document.createElement('button');
+    btnTick.textContent = '✓';
+    btnTick.className = 'btn-small';
+    btnTick.addEventListener('click', () => {
+      doneList.push(todo);
+      todoList.splice(idx, 1);
+      saveData();
+      renderList();
+    });
+
+    const span = document.createElement('span');
+    span.className = 'task-content';
+    span.textContent = `${idx + 1}. ${todo}`;
+
+    const btnDel = document.createElement('button');
+    btnDel.textContent = '×';
+    btnDel.className = 'btn-small btn-delete';
+    btnDel.addEventListener('click', () => {
+      todoList.splice(idx, 1);
+      saveData();
+      renderList();
+    });
+
+    li.appendChild(btnTick);
+    li.appendChild(span);
+    li.appendChild(btnDel);
+    todoUl.appendChild(li);
   });
 
-  const blob = new Blob([lines.join('\n')], {type: 'text/plain;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
+  doneList.forEach((done, idx) => {
+    const li = document.createElement('li');
+    li.className = 'done-item done';
+
+    const btnUndo = document.createElement('button');
+    btnUndo.textContent = 'Undo';
+    btnUndo.className = 'btn-small';
+    btnUndo.addEventListener('click', () => {
+      todoList.push(done);
+      doneList.splice(idx, 1);
+      saveData();
+      renderList();
+    });
+
+    const span = document.createElement('span');
+    span.className = 'task-content';
+    span.textContent = `${idx + 1}. ${done}`;
+
+    const btnDel = document.createElement('button');
+    btnDel.textContent = '×';
+    btnDel.className = 'btn-small btn-delete';
+    btnDel.addEventListener('click', () => {
+      doneList.splice(idx, 1);
+      saveData();
+      renderList();
+    });
+
+    li.appendChild(btnUndo);
+    li.appendChild(span);
+    li.appendChild(btnDel);
+    doneUl.appendChild(li);
+  });
+}
+
+// 新增todo输入框回车添加
+newTodoInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
+    const val = newTodoInput.value.trim();
+    if (val && !todoList.includes(val) && !doneList.includes(val)) {
+      todoList.push(val);
+      newTodoInput.value = '';
+      saveData();
+      renderList();
+    } else {
+      alert('Task is empty or already exists.');
+    }
+  }
+});
+
+// 👇 点按钮也添加
+document.getElementById('addTodoBtn').addEventListener('click', () => {
+  const val = newTodoInput.value.trim();
+  if (val && !todoList.includes(val) && !doneList.includes(val)) {
+    todoList.push(val);
+    newTodoInput.value = '';
+    saveData();
+    renderList();
+  } else {
+    alert('Task is empty or already exists.');
+  }
+});
+
+// 用户名输入实时保存
+userNameInput.addEventListener('input', e => {
+  userName = e.target.value.trim();
+  updateUserNameDisplay();
+  saveData();
+});
+
+// Reset按钮恢复默认列表和done
+clearBtn.addEventListener('click', () => {
+  if (confirm('Are you sure to reset todo and done list to default?')) {
+    todoList = defaultTodosPool.slice(0, 3);
+    doneList = ["Ride a hot air balloon", "Went on safari"];
+    saveData();
+    renderList();
+  }
+});
+
+// Random 10按钮随机取10个不重复任务填todo
+randomBtn.addEventListener('click', () => {
+  const shuffled = [...defaultTodosPool].sort(() => 0.5 - Math.random());
+  todoList = shuffled.slice(0, 10);
+  saveData();
+  renderList();
+});
+
+// 导入文件按钮，点击触发隐藏的input file
+importBtn.addEventListener('click', () => {
+  importInput.value = '';
+  importInput.click();
+});
+
+// 处理导入文件
+
+importInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'txt') {
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const text = evt.target.result;
+      const lines = text.split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l)
+        .map(l => l.replace(/^\d+\.\s*/, '')); // 去掉行首数字+点+空格
+      todoList = lines.filter(l => !doneList.includes(l));
+      saveData();
+      renderList();
+    };
+    reader.readAsText(file);
+  } else if (ext === 'xls' || ext === 'xlsx') {
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, {type: 'array'});
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+      const lines = json.flat()
+        .map(String)
+        .map(s => s.trim())
+        .filter(s => s && !doneList.includes(s))
+        .map(s => s.replace(/^\d+\.\s*/, '')); // 去掉行首数字+点+空格
+      todoList = lines;
+      saveData();
+      renderList();
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    alert('Only .txt and .xls/.xlsx files are supported.');
+  }
+});
+
+// 导出菜单按钮切换显示
+exportBtn.addEventListener('click', () => {
+  exportMenu.style.display = exportMenu.style.display === 'block' ? 'none' : 'block';
+});
+
+// 点击空白关闭导出菜单
+document.addEventListener('click', e => {
+  if (!exportBtn.contains(e.target) && !exportMenu.contains(e.target)) {
+    exportMenu.style.display = 'none';
+  }
+});
+
+// 导出为TXT文本
+
+exportTxtBtn.addEventListener('click', () => {
+  const lines = [];
+  lines.push('Todo List:');
+  todoList.forEach((item, i) => {
+    lines.push(`${i + 1}. ${item}`);
+  });
+  lines.push('');
+  lines.push('Done List:');
+  doneList.forEach((item, i) => {
+    lines.push(`${i + 1}. ${item}`);
+  });
+  const content = lines.join('\n');
+  const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'bucket_list_export.txt';
+  a.href = URL.createObjectURL(blob);
+  a.download = `${userName||'bucketlist'}_${new Date().toISOString().slice(0,10)}.txt`;
   a.click();
-  URL.revokeObjectURL(url);
+  exportMenu.style.display = 'none';
+});
+
+// 导出为PNG图片，含标题和日期
+exportImageBtn.addEventListener('click', () => {
+  exportMenu.style.display = 'none';
+
+  // 使用canvas绘制内容
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const padding = 20;
+  const lineHeight = 24;
+  const titleFont = 'bold 24px Arial';
+  const textFont = '16px Arial';
+  const dateStr = new Date().toISOString().slice(0,10);
+  const title = `${userName || 'User'} bucketlist - ${dateStr}`;
+
+  // 计算宽度和高度
+  const maxWidth = 550;
+  // 预估高度: 标题 + todo行 + done行 +间隔
+  const totalLines = 1 + 1 + todoList.length + 1 + doneList.length; // 标题, Todo标题, todos, Done标题, dones
+  const height = padding * 2 + totalLines * lineHeight + 40;
+  canvas.width = maxWidth;
+  canvas.height = height;
+
+  // 背景
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 标题
+  ctx.font = titleFont;
+  ctx.fillStyle = '#222';
+  ctx.fillText(title, padding, padding + lineHeight);
+
+  ctx.font = textFont;
+  ctx.fillStyle = '#000';
+
+  let y = padding + lineHeight * 2 + 10;
+  ctx.fillText('Todo List:', padding, y);
+  y += lineHeight;
+
+  todoList.forEach((item, idx) => {
+    ctx.fillText(`${idx + 1}. ${item}`, padding + 10, y);
+    y += lineHeight;
+  });
+
+  y += lineHeight / 2;
+  ctx.fillText('Done List:', padding, y);
+  y += lineHeight;
+
+  doneList.forEach((item, idx) => {
+    ctx.fillStyle = '#888';
+    ctx.fillText(`${idx + 1}. ${item}`, padding + 10, y);
+    y += lineHeight;
+    ctx.fillStyle = '#000';
+  });
+
+  // 生成图片并下载
+  canvas.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${userName||'bucketlist'}_${dateStr}.png`;
+    a.click();
+  });
 });
 
 // 初始化
 loadData();
 renderList();
-
 </script>
 
 </body>
