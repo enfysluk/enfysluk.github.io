@@ -1,71 +1,206 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bucket List</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
-  h1 { text-align: center; }
-  input[type=text] { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
-  button { padding: 8px 16px; margin: 5px 5px 5px 0; cursor: pointer; }
-  ul { list-style: none; padding: 0; }
-  li { padding: 5px 0; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
-  li.done span { text-decoration: line-through; color: gray; }
-  .btn-small { font-size: 0.9em; padding: 4px 8px; }
-  #buttonsContainer { margin-bottom: 10px; position: relative; }
-  #exportMenu {
-    position: absolute;
-    background: white;
-    border: 1px solid #ccc;
-    display: none;
-    padding: 5px;
-    z-index: 10;
-    right: 0;
-  }
-  #exportMenu button {
-    display: block;
-    width: 100%;
-    margin: 3px 0;
-  }
-  #importInput {
-    display: none;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Bucket List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #333;
+      --secondary: #f4f4f4;
+      --accent: #2196F3;
+      --font: 'Lato', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background-color: var(--secondary);
+      color: var(--primary);
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 5px;
+      margin-top: 30px;
+    }
+
+    input[type=text], button {
+      font-family: var(--font);
+    }
+
+    input[type=text] {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 8px 16px;
+      margin: 5px 5px 5px 0;
+      border: none;
+      border-radius: 4px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #1976d2;
+    }
+
+    .btn-small {
+      font-size: 0.85em;
+      padding: 6px 12px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    li.done span {
+      text-decoration: line-through;
+      color: gray;
+    }
+
+    .btn-delete {
+      background: #e91e63;
+    }
+
+    .btn-delete:hover {
+      background: #c2185b;
+    }
+
+    #buttonsContainer {
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    #exportMenu {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      display: none;
+      padding: 5px;
+      z-index: 10;
+      right: 0;
+    }
+
+    #exportMenu button {
+      display: block;
+      width: 100%;
+      margin: 3px 0;
+    }
+
+    #importInput {
+      display: none;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9em;
+      background: #fafafa;
+      color: #666;
+      border-top: 1px solid #ddd;
+      margin-top: 40px;
+    }
+
+    .back-link {
+      margin-top: 30px;
+      display: block;
+      text-align: center;
+    }
+
+    .back-link a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
 
-<input type="text" id="userNameInput" placeholder="Enter your name" style="width: 60%; display: block; margin: 0 auto;" />
+  <header>
+    <h1>My Bucket List</h1>
+  </header>
 
-<h1><span id="userNameDisplay">My bucket list</span></h1>
+  <main class="container">
+    <input type="text" id="userNameInput" placeholder="Enter your name" style="width: 60%; display: block; margin: 0 auto;" />
 
+    <h2 id="userNameDisplay">My bucket list</h2>
 
-<label for="newTodoInput">Add new todo:</label>
-<div style="display: flex; gap: 5px;">
-  <input type="text" id="newTodoInput" placeholder="Enter new task and press Enter" style="flex: 1;" />
-  <button id="addTodoBtn">+</button>
-</div>
+    <label for="newTodoInput">Add new todo:</label>
+    <div style="display: flex; gap: 5px;">
+      <input type="text" id="newTodoInput" placeholder="Enter new task and press Enter" />
+      <button id="addTodoBtn">+</button>
+    </div>
 
-<!-- 按钮组，放到Todo列表上面 -->
-<div id="buttonsContainer">
-  <button id="clearBtn" class="btn-small">Reset</button>
-  <button id="randomBtn" class="btn-small">Random</button>
-  <button id="importBtn" class="btn-small">Import</button>
-  <input type="file" id="importInput" accept=".txt,.xls,.xlsx" />
-  <button id="exportBtn" class="btn-small">Export</button>
-  <div id="exportMenu">
-    <button id="exportTxtBtn">Export as TXT</button>
-    <button id="exportImageBtn">Export as PNG</button>
-  </div>
-</div>
+    <div id="buttonsContainer">
+      <button id="clearBtn" class="btn-small">Reset</button>
+      <button id="randomBtn" class="btn-small">Random</button>
+      <button id="importBtn" class="btn-small">Import</button>
+      <input type="file" id="importInput" accept=".txt,.xls,.xlsx" />
+      <button id="exportBtn" class="btn-small">Export</button>
+      <div id="exportMenu">
+        <button id="exportTxtBtn">Export as TXT</button>
+        <button id="exportImageBtn">Export as PNG</button>
+      </div>
+    </div>
 
-<h2>Todo List</h2>
-<ul id="todoList"></ul>
+    <h2>Todo List</h2>
+    <ul id="todoList"></ul>
 
-<h2>Done List</h2>
-<ul id="doneList"></ul>
+    <h2>Done List</h2>
+    <ul id="doneList"></ul>
+
+    <div class="back-link">
+      <a href="index.html">← Back to Home</a>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 Enfys Travel. All rights reserved.</p>
+  </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
