@@ -2,63 +2,157 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enfys Travels | 90 Countries Without Quitting</title>
   <meta name="description" content="Explore the world through 90 countries with Enfys — hiking, diving, camping, skiing and more, all without quitting a full-time job." />
   <meta name="keywords" content="world travel, dream trip, travel advice, travel tips, hiking, scuba diving, skiing, camping, travel blog, outdoor adventures, digital nomad, travel gear" />
   <meta name="author" content="Enfys" />
-  <title>Enfys Travels | 90 Countries Without Quitting</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: Arial, sans-serif;
+      margin: 0; 
+      font-family: 'Poppins', sans-serif;
+      background-color: #fff;
+      color: #1c1c1c;
       line-height: 1.6;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-      color: #333;
+    }
+    a {
+      color: #f97316; /* warm orange accent */
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    a:hover {
+      color: #b45309;
     }
     header {
-      background-color: #008080;
-      color: #fff;
-      padding: 20px 10px;
+      background: #111827; /* very dark blue-gray */
+      color: #f9fafb; /* almost white */
+      padding: 3rem 2rem 4rem;
       text-align: center;
+    }
+    header h1 {
+      font-weight: 600;
+      font-size: 3rem;
+      margin: 0;
+      letter-spacing: 0.06em;
+    }
+    header p {
+      font-weight: 300;
+      font-size: 1.25rem;
+      margin-top: 0.5rem;
+      letter-spacing: 0.03em;
     }
     nav {
-      text-align: center;
-      background: #eee;
-      padding: 10px;
+      display: flex;
+      justify-content: center;
+      background: #fef3c7; /* light warm yellow */
+      padding: 1rem 0;
+      gap: 2rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     nav a {
-      margin: 0 15px;
-      text-decoration: none;
-      color: #008080;
+      color: #92400e; /* dark orange-brown */
+      font-size: 0.9rem;
+      position: relative;
+      padding-bottom: 4px;
+    }
+    nav a::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: #f97316;
+      transition: width 0.3s ease;
+    }
+    nav a:hover::after {
+      width: 100%;
     }
     .container {
       max-width: 900px;
-      margin: auto;
-      padding: 20px;
-      background: white;
-    }
-    .section {
-      margin-top: 30px;
+      margin: 3rem auto 5rem;
+      padding: 0 2rem;
     }
     h2 {
-      color: #008080;
+      font-weight: 600;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #111827;
+      border-left: 5px solid #f97316;
+      padding-left: 1rem;
+      margin-top: 3rem;
+    }
+    h3 {
+      font-weight: 600;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: #374151;
+    }
+    p {
+      font-weight: 300;
+      font-size: 1.1rem;
+      color: #4b5563;
+      max-width: 720px;
     }
     ul {
-      list-style: square;
-      margin-left: 20px;
+      list-style-type: none;
+      padding-left: 0;
+      max-width: 720px;
     }
-    footer {
-      text-align: center;
-      padding: 10px;
-      background: #ddd;
-      font-size: 0.9em;
-      color: #555;
+    ul li {
+      background: #fef3c7;
+      margin-bottom: 10px;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-weight: 400;
+      color: #92400e;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.08);
+      transition: background-color 0.3s ease;
+    }
+    ul li:hover {
+      background-color: #fde68a;
     }
     .map-img {
+      display: block;
       max-width: 100%;
-      border: 1px solid #ccc;
-      margin-top: 10px;
+      height: auto;
+      margin-top: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      border: none;
+    }
+    footer {
+      background: #111827;
+      color: #9ca3af;
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-weight: 300;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+    }
+    /* Responsive */
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 2rem;
+      }
+      header p {
+        font-size: 1rem;
+      }
+      nav {
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .container {
+        margin: 2rem 1rem 4rem;
+        padding: 0 1rem;
+      }
     }
   </style>
 </head>
@@ -77,14 +171,16 @@
     <a href="#">Destinations</a>
   </nav>
 
-  <div class="container">
-    <h2>🌍 Welcome to My Travel World</h2>
-    <p>
-      A passionate explorer who's traveled to <strong>90 countries</strong> without quitting my job. From hiking in the Andes to diving in the Caribbean, skiing in the Alps to camping under Saharan stars, I've built this site to share stories, tips, and gear recommendations for travelers who want <em>more adventure, less hassle</em>.
-    </p>
+  <main class="container">
+    <section>
+      <h2>🌍 Welcome to My Travel World</h2>
+      <p>
+        A passionate explorer who's traveled to <strong>90 countries</strong> without quitting my job. From hiking in the Andes to diving in the Caribbean, skiing in the Alps to camping under Saharan stars, I've built this site to share stories, tips, and gear recommendations for travelers who want <em>more adventure, less hassle</em>.
+      </p>
+    </section>
 
-    <div class="section">
-      <h3>🗺️ Where I've Been (by Continent)</h3>
+    <section>
+      <h2>🗺️ Where I've Been (by Continent)</h2>
       <ul>
         <li><strong>Europe:</strong> Spain, France, Norway, Switzerland, ...</li>
         <li><strong>Asia:</strong> Japan, Thailand, Nepal, ...</li>
@@ -93,29 +189,52 @@
         <li><strong>Africa:</strong> Morocco, Kenya, South Africa, ...</li>
         <li><strong>Oceania:</strong> Australia, New Zealand, Fiji, ...</li>
       </ul>
-   <img src="images/IMG_2129.jpeg" alt="World Travel Map" class="map-img" />
-    </div>
+      <img src="images/IMG_2129.jpeg" alt="World Travel Map" class="map-img" />
+    </section>
 
-    <div class="section">
-      <h3>🔥 What I Love Doing</h3>
+    <section>
+      <h2>🔥 What I Love Doing</h2>
       <ul>
         <li><strong>🏔 Hiking:</strong> From Patagonia to the Himalayas</li>
         <li><strong>🏕 Camping:</strong> Remote escapes under the stars</li>
         <li><strong>🤿 Diving:</strong> Coral reefs, cenotes, shipwrecks</li>
         <li><strong>🎿 Skiing:</strong> Alps, Rockies, and off-the-grid slopes</li>
       </ul>
-    </div>
+    </section>
 
-    <div class="section">
-      <h3>✨ Start Exploring</h3>
+    <section>
+      <h2>🌊 Popular Snorkeling & Diving Spots (By Continent)</h2>
+      <ul>
+        <li><strong>Caribbean & Central America:</strong> Roatán (Honduras), Belize Barrier Reef, Cozumel (Mexico), Bonaire</li>
+        <li><strong>Asia-Pacific:</strong> Raja Ampat (Indonesia), Palawan & Apo Island (Philippines), Great Barrier Reef (Australia), Maldives</li>
+        <li><strong>Europe:</strong> Azores (Portugal), Malta, Canary Islands (Spain), Greece’s Mediterranean spots</li>
+        <li><strong>Africa:</strong> Red Sea (Egypt), Mauritius, Seychelles</li>
+      </ul>
+      <p>Each region offers unique marine biodiversity, from coral walls and wrecks to shark encounters and vibrant reef life.</p>
+    </section>
+
+    <section>
+      <h2>🎒 Recommended Gear for Diving & Snorkeling</h2>
+      <ul>
+        <li>Quality mask & snorkel set (anti-fog & tempered glass)</li>
+        <li>Wetsuit (3mm for warm waters, 5mm+ for cooler regions)</li>
+        <li>Fins with comfortable fit and good propulsion</li>
+        <li>Dive computer or waterproof watch</li>
+        <li>Underwater camera or GoPro for capturing memories</li>
+        <li>Surface marker buoy (SMB) for safety</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>✨ Start Exploring</h2>
       <p>
         Head over to the activity pages above, or explore destination guides for unique itineraries, personal tips, and gear I use on the road.
       </p>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <footer>
-    © 2025 Enfys| All content and images by me. Reuse allowed with credit.
+    © 2025 Enfys | All content and images by me. Reuse allowed with credit.
   </footer>
 </body>
 </html>
