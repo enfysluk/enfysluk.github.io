@@ -7,7 +7,31 @@
   body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
   ul { list-style: none; padding: 0; }
   li { margin-bottom: 6px; display: flex; align-items: center; }
-  button.delete { margin-left: 10px; }
+  li span.index {
+    width: 30px;
+    display: inline-block;
+    font-weight: bold;
+  }
+  button.delete {
+    margin-left: 10px;
+    color: red;
+    background: none;
+    border: none;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    user-select: none;
+  }
+  button.delete:hover {
+    color: darkred;
+  }
+  input[type="text"] {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 4px 6px;
+  }
 </style>
 </head>
 <body>
@@ -17,7 +41,7 @@
 <input type="text" id="userNameInput" placeholder="Enter your name" />
 <button id="setNameBtn">Set Name</button>
 
-<div style="margin-top:15px;">
+<div style="margin-top:15px; display: flex; gap: 6px;">
   <input type="text" id="newItemInput" placeholder="Add new item" />
   <button id="addBtn">Add Item</button>
 </div>
@@ -55,7 +79,7 @@ const importFile = document.getElementById('importFile');
 const exportBtn = document.getElementById('exportBtn');
 
 const defaultTodo = ["Make a chamoyada","Turn off phone 48h","Draw a self-portrait"];
-const defaultDone = ["Rode a hot air balloon","Went on safari"];
+const defaultDone = ["Ride a hot air balloon","Went on safari"];
 
 function saveData(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -95,6 +119,7 @@ function renderList(){
   todoListElem.innerHTML = '';
   todoList.forEach((item, i) => {
     const li = document.createElement('li');
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.addEventListener('change', ()=>{
@@ -105,8 +130,15 @@ function renderList(){
         renderList();
       }
     });
+
+    const indexSpan = document.createElement('span');
+    indexSpan.textContent = (i + 1) + '.';
+    indexSpan.className = 'index';
+
     const span = document.createElement('span');
     span.textContent = item;
+    span.style.flexGrow = '1';
+
     const delBtn = document.createElement('button');
     delBtn.textContent = 'x';
     delBtn.className = 'delete';
@@ -115,7 +147,9 @@ function renderList(){
       saveData();
       renderList();
     };
+
     li.appendChild(checkbox);
+    li.appendChild(indexSpan);
     li.appendChild(span);
     li.appendChild(delBtn);
     todoListElem.appendChild(li);
@@ -124,6 +158,7 @@ function renderList(){
   doneListElem.innerHTML = '';
   doneList.forEach((item, i) => {
     const li = document.createElement('li');
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = true;
@@ -135,17 +170,26 @@ function renderList(){
         renderList();
       }
     });
+
+    const indexSpan = document.createElement('span');
+    indexSpan.textContent = (i + 1) + '.';
+    indexSpan.className = 'index';
+
     const span = document.createElement('span');
     span.textContent = item;
+    span.style.flexGrow = '1';
+
     const delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete';
+    delBtn.textContent = 'x';
     delBtn.className = 'delete';
     delBtn.onclick = () => {
       doneList.splice(i,1);
       saveData();
       renderList();
     };
+
     li.appendChild(checkbox);
+    li.appendChild(indexSpan);
     li.appendChild(span);
     li.appendChild(delBtn);
     doneListElem.appendChild(li);
@@ -196,10 +240,6 @@ importFile.addEventListener('change', e => {
 });
 
 function parseImport(text){
-  // 简单解析格式：
-  // 第一行名字: xxx's Bucket List
-  // 然后空行，再 Things to Do: ，再列表
-  // Completed: 再列表
   let lines = text.split(/\r?\n/);
   let newUser = '';
   let newTodo = [];
@@ -223,7 +263,6 @@ function parseImport(text){
     }
     if(line === '' || line.toLowerCase().startsWith('exported on')) continue;
 
-    // 去除数字开头如 1. xxx
     line = line.replace(/^\d+\.\s*/, '');
     if(section === 'todo' && line) newTodo.push(line);
     if(section === 'done' && line) newDone.push(line);
