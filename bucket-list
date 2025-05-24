@@ -2,399 +2,314 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Bucket List</title>
 <style>
   body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-  h1 { text-align: center; }
   ul { list-style: none; padding: 0; }
-  li { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-  label { cursor: pointer; flex: 1; }
-  input[type="checkbox"] { margin-right: 10px; }
-  button { margin: 5px 5px 15px 0; padding: 8px 12px; }
-  .delete-btn {
+  li { margin-bottom: 6px; display: flex; align-items: center; }
+  li span.index {
+    width: 30px;
+    display: inline-block;
+    font-weight: bold;
+  }
+  button.delete {
+    margin-left: 10px;
+    color: red;
     background: none;
     border: none;
-    color: #cc0000;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
-    padding: 0 8px;
+    padding: 0 4px;
+    line-height: 1;
     user-select: none;
   }
-  #userNameInput, #newItemInput { padding: 6px; width: 200px; }
-  #newItemInput { margin-right: 5px; }
+  button.delete:hover {
+    color: darkred;
+  }
+  input[type="text"] {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 4px 6px;
+  }
 </style>
 </head>
 <body>
 
-<div style="text-align:center; margin-bottom: 15px;">
-  <input type="text" id="userNameInput" placeholder="Enter your name" />
-  <button id="setNameBtn">Set Name</button>
+<h1 id="title">My Bucket List ✅</h1>
+
+<input type="text" id="userNameInput" placeholder="Enter your name" />
+<button id="setNameBtn">Set Name</button>
+
+<div style="margin-top:15px; display: flex; gap: 6px;">
+  <input type="text" id="newItemInput" placeholder="Add new item" />
+  <button id="addBtn">Add Item</button>
 </div>
 
-<h1 id="titleHeader">My Bucket List ✅</h1>
+<h2>To Do</h2>
+<ul id="todoList"></ul>
 
-<div style="margin-bottom: 15px; text-align:center;">
-  <input type="text" id="newItemInput" placeholder="Add a new bucket list item" />
-  <button id="addItemBtn">Add Item</button>
-</div>
+<h2>Completed</h2>
+<ul id="doneList"></ul>
 
-<div>
-  <h2>Things to Do</h2>
-  <ul id="todoList"></ul>
-</div>
+<button id="clearBtn">Clear All (Reset)</button>
 
-<div>
-  <h2>Completed</h2>
-  <ul id="completedList"></ul>
-</div>
-
-<button id="clearAllBtn">Clear All (Reset)</button>
-
-<div style="margin-top: 20px; text-align:center;">
-  <input type="file" id="importInput" accept=".txt" />
-  <button id="exportImageBtn">Export as Image</button>
+<div style="margin-top:20px;">
+  <input type="file" id="importFile" accept=".txt" style="display:none" />
+  <button id="importBtn">Import</button>
+  <button id="exportBtn">Export</button>
 </div>
 
 <script>
-const defaultTodo = [
-  "Make a standard chamoyada",
-  "Make a standard matcha using tools",
-  "Make coffee latte art with leaf pattern",
-  "Turn off phone for 48 hours without contacting anyone",
-  "Draw a self-portrait",
-  "Wreck diving",
-  "Get a seaman certificate",
-  "Volunteer in Antarctica once",
-  "Dive off a platform",
-  "Learn Thomas spin (Thomas-style figure skating spin)",
-  "Do 10 standard pull-ups",
-  "Build “pumpkin shoulders”",
-  "Travel around the world in 80 days",
-  "Build a personal website and do SEO",
-  "Develop and publish an app (iOS)",
-  "Write 10 travelogues",
-  "Learn meditation",
-  "Publish a book/travelogue",
-  "Make a movie",
-  "Chat in Japanese all afternoon",
-  "See Northern Lights and ski in Scandinavia",
-  "Live in Japan for 3 months",
-  "Learn a magic trick",
-  "Pick mushrooms once",
-  "Learn Morse code",
-  "Skydive",
-  "Jump off a bridge",
-  "Volunteer far away",
-  "Go on a campervan trip",
-  "Fold an animal by origami",
-  "Watch whales in the wild",
-  "Learn juggling",
-  "Ride a Harley with a passenger",
-  "Drive a dune buggy",
-  "Zipline once",
-  "Plant a tree",
-  "Learn to cook grilled fish, skewers, Sichuan cuisine",
-  "Go deep-sea fishing with old friends and cook grilled fish",
-  "Survive alone on a deserted island or catch mantis shrimp/lobster",
-  "Experience level 10 loneliness",
-  "Take a surprise trip (decide destination at airport)",
-  "Explore a haunted house",
-  "Roast marshmallows once",
-  "Go to a carnival / running of the bulls / tomato festival",
-  "Set up a street stall",
-  "Successfully do a handstand or headstand",
-  "Play “Diver Dave”",
-  "Spend a night on a cliff (Peru)",
-  "Dye hair pink / grey / rainbow / afro",
-  "Fly a plane once",
-  "Raise a chameleon",
-  "Learn dermatology knowledge",
-  "Learn nutrition and wellness coaching",
-  "CPR + AED training",
-  "Go on a food lover’s pilgrimage"
-];
-
-const defaultCompleted = [
-  "Camped under dragon blood tree",
-  "Rode a hot air balloon",
-  "Went on safari",
-  "Did bungee jumping",
-  "White-water rafting",
-  "Caught a fish",
-  "Saw a castle",
-  "Visited a cave",
-  "Went to a desert",
-  "Went to an active volcano",
-  "Learned backflip",
-  "Cliff diving"
-];
-
 const STORAGE_KEY = 'bucketListData';
-
-let todoListData = [];
-let completedListData = [];
+let todoList = [];
+let doneList = [];
 let userName = '';
 
-const todoListElem = document.getElementById('todoList');
-const completedListElem = document.getElementById('completedList');
-const clearAllBtn = document.getElementById('clearAllBtn');
 const userNameInput = document.getElementById('userNameInput');
 const setNameBtn = document.getElementById('setNameBtn');
-const titleHeader = document.getElementById('titleHeader');
-const importInput = document.getElementById('importInput');
-const exportImageBtn = document.getElementById('exportImageBtn');
+const title = document.getElementById('title');
 const newItemInput = document.getElementById('newItemInput');
-const addItemBtn = document.getElementById('addItemBtn');
+const addBtn = document.getElementById('addBtn');
+const todoListElem = document.getElementById('todoList');
+const doneListElem = document.getElementById('doneList');
+const clearBtn = document.getElementById('clearBtn');
+const importBtn = document.getElementById('importBtn');
+const importFile = document.getElementById('importFile');
+const exportBtn = document.getElementById('exportBtn');
 
-function saveData() {
+const defaultTodo = ["Make a chamoyada","Turn off phone 48h","Draw a self-portrait"];
+const defaultDone = ["Ride a hot air balloon","Went on safari"];
+
+function saveData(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    todo: todoListData,
-    completed: completedListData,
-    userName: userName
+    userName,
+    todoList,
+    doneList
   }));
 }
 
-function loadData() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const obj = JSON.parse(saved);
-      todoListData = obj.todo && obj.todo.length ? obj.todo : [...defaultTodo];
-      completedListData = obj.completed && obj.completed.length ? obj.completed : [...defaultCompleted];
-      userName = obj.userName || '';
-      if (userName) {
-        titleHeader.textContent = `${userName}'s Bucket List ✅`;
-        userNameInput.value = userName;
-      } else {
-        titleHeader.textContent = `My Bucket List ✅`;
-      }
-    } catch {
-      todoListData = [...defaultTodo];
-      completedListData = [...defaultCompleted];
+function loadData(){
+  const dataStr = localStorage.getItem(STORAGE_KEY);
+  if(dataStr){
+    try{
+      const data = JSON.parse(dataStr);
+      userName = data.userName || '';
+      todoList = Array.isArray(data.todoList) ? data.todoList : [...defaultTodo];
+      doneList = Array.isArray(data.doneList) ? data.doneList : [...defaultDone];
+    }catch{
       userName = '';
-      titleHeader.textContent = `My Bucket List ✅`;
+      todoList = [...defaultTodo];
+      doneList = [...defaultDone];
     }
-  } else {
-    todoListData = [...defaultTodo];
-    completedListData = [...defaultCompleted];
+  }else{
     userName = '';
-    titleHeader.textContent = `My Bucket List ✅`;
+    todoList = [...defaultTodo];
+    doneList = [...defaultDone];
   }
+  userNameInput.value = userName;
+  updateTitle();
 }
 
-function createListItem(text, index, completed) {
-  const li = document.createElement('li');
-
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.checked = completed;
-  checkbox.id = (completed ? 'completed_' : 'todo_') + index;
-  checkbox.addEventListener('change', () => {
-    if (checkbox.checked) {
-      if (!completed) {
-        completedListData.push(text);
-        todoListData.splice(index, 1);
-      }
-    } else {
-      if (completed) {
-        todoListData.push(text);
-        completedListData.splice(index, 1);
-      }
-    }
-    sortAndSave();
-    renderLists();
-  });
-
-  const label = document.createElement('label');
-  label.htmlFor = checkbox.id;
-  label.textContent = text;
-  label.style.flex = '1';
-
-  const delBtn = document.createElement('button');
-  delBtn.textContent = '×';
-  delBtn.className = 'delete-btn';
-  delBtn.title = 'Delete this item';
-  delBtn.addEventListener('click', () => {
-    if (completed) {
-      completedListData.splice(index, 1);
-    } else {
-      todoListData.splice(index, 1);
-    }
-    sortAndSave();
-    renderLists();
-  });
-
-  li.appendChild(checkbox);
-  li.appendChild(label);
-  li.appendChild(delBtn);
-
-  return li;
+function updateTitle(){
+  title.textContent = userName ? `${userName}'s Bucket List ✅` : 'My Bucket List ✅';
 }
 
-function sortAndSave() {
-  todoListData = [...new Set(todoListData)];
-  completedListData = [...new Set(completedListData)];
-  saveData();
-}
-
-function renderLists() {
+function renderList(){
   todoListElem.innerHTML = '';
-  completedListElem.innerHTML = '';
+  todoList.forEach((item, i) => {
+    const li = document.createElement('li');
 
-  todoListData.forEach((item, idx) => {
-    const li = createListItem(item, idx, false);
-    li.querySelector('label').textContent = `${idx + 1}. ${item}`;
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.addEventListener('change', ()=>{
+      if(checkbox.checked){
+        doneList.push(item);
+        todoList.splice(i,1);
+        saveData();
+        renderList();
+      }
+    });
+
+    const indexSpan = document.createElement('span');
+    indexSpan.textContent = (i + 1) + '.';
+    indexSpan.className = 'index';
+
+    const span = document.createElement('span');
+    span.textContent = item;
+    span.style.flexGrow = '1';
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'x';
+    delBtn.className = 'delete';
+    delBtn.onclick = () => {
+      todoList.splice(i,1);
+      saveData();
+      renderList();
+    };
+
+    li.appendChild(checkbox);
+    li.appendChild(indexSpan);
+    li.appendChild(span);
+    li.appendChild(delBtn);
     todoListElem.appendChild(li);
   });
 
-  completedListData.forEach((item, idx) => {
-    const li = createListItem(item, idx, true);
-    li.querySelector('label').textContent = `${idx + 1}. ${item}`;
-    completedListElem.appendChild(li);
+  doneListElem.innerHTML = '';
+  doneList.forEach((item, i) => {
+    const li = document.createElement('li');
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = true;
+    checkbox.addEventListener('change', ()=>{
+      if(!checkbox.checked){
+        todoList.push(item);
+        doneList.splice(i,1);
+        saveData();
+        renderList();
+      }
+    });
+
+    const indexSpan = document.createElement('span');
+    indexSpan.textContent = (i + 1) + '.';
+    indexSpan.className = 'index';
+
+    const span = document.createElement('span');
+    span.textContent = item;
+    span.style.flexGrow = '1';
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'x';
+    delBtn.className = 'delete';
+    delBtn.onclick = () => {
+      doneList.splice(i,1);
+      saveData();
+      renderList();
+    };
+
+    li.appendChild(checkbox);
+    li.appendChild(indexSpan);
+    li.appendChild(span);
+    li.appendChild(delBtn);
+    doneListElem.appendChild(li);
   });
 }
 
 setNameBtn.addEventListener('click', () => {
-  const name = userNameInput.value.trim();
-  userName = name;
-  if (name) {
-    titleHeader.textContent = `${name}'s Bucket List ✅`;
-  } else {
-    titleHeader.textContent = `My Bucket List ✅`;
-  }
+  userName = userNameInput.value.trim();
+  updateTitle();
   saveData();
 });
 
-clearAllBtn.addEventListener('click', () => {
-  todoListData = [...defaultTodo];
-  completedListData = [...defaultCompleted];
-  userName = '';
-  userNameInput.value = '';
-  titleHeader.textContent = `My Bucket List ✅`;
-  saveData();
-  renderLists();
-});
-
-addItemBtn.addEventListener('click', () => {
-  const newItem = newItemInput.value.trim();
-  if (newItem) {
-    todoListData.push(newItem);
+addBtn.addEventListener('click', () => {
+  const val = newItemInput.value.trim();
+  if(val){
+    todoList.push(val);
     newItemInput.value = '';
-    sortAndSave();
-    renderLists();
+    saveData();
+    renderList();
   }
 });
 
-importInput.addEventListener('change', (e) => {
+clearBtn.addEventListener('click', () => {
+  if(confirm('Clear all and reset to default?')){
+    userName = '';
+    userNameInput.value = '';
+    todoList = [...defaultTodo];
+    doneList = [...defaultDone];
+    updateTitle();
+    saveData();
+    renderList();
+  }
+});
+
+importBtn.addEventListener('click', () => {
+  importFile.click();
+});
+
+importFile.addEventListener('change', e => {
   const file = e.target.files[0];
-  if (!file) return;
+  if(!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    const text = reader.result;
-    parseImportedText(text);
-    renderLists();
+    parseImport(reader.result);
   };
   reader.readAsText(file);
-  importInput.value = '';
+  importFile.value = '';
 });
 
-function parseImportedText(text) {
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-  let newUserName = '';
-  let todoImported = [];
-  let completedImported = [];
-  let currentSection = '';
-  for (let line of lines) {
-    if (line.toLowerCase().includes('bucketlist')) {
-      const match = line.match(/^(.+?)'s bucketlist/i);
-      if (match) newUserName = match[1];
+function parseImport(text){
+  let lines = text.split(/\r?\n/);
+  let newUser = '';
+  let newTodo = [];
+  let newDone = [];
+  let section = '';
+
+  for(let line of lines){
+    line = line.trim();
+    if(line.toLowerCase().endsWith("bucket list")){
+      let m = line.match(/^(.+?)'s bucket list$/i);
+      if(m) newUser = m[1];
       continue;
     }
-    if (line.toLowerCase().startsWith('things to do')) {
-      currentSection = 'todo';
+    if(line.toLowerCase() === 'things to do:' || line.toLowerCase() === 'things to do'){
+      section = 'todo';
       continue;
     }
-    if (line.toLowerCase().startsWith('completed')) {
-      currentSection = 'completed';
+    if(line.toLowerCase() === 'completed:' || line.toLowerCase() === 'completed'){
+      section = 'done';
       continue;
     }
-    if (currentSection === 'todo') {
-      line = line.replace(/^\d+\.\s*/, '');
-      todoImported.push(line);
-    } else if (currentSection === 'completed') {
-      line = line.replace(/^\d+\.\s*/, '');
-      completedImported.push(line);
-    }
+    if(line === '' || line.toLowerCase().startsWith('exported on')) continue;
+
+    line = line.replace(/^\d+\.\s*/, '');
+    if(section === 'todo' && line) newTodo.push(line);
+    if(section === 'done' && line) newDone.push(line);
   }
-  if (todoImported.length > 0) todoListData = todoImported;
-  if (completedImported.length > 0) completedListData = completedImported;
-  if (newUserName) {
-    userName = newUserName;
-    userNameInput.value = newUserName;
-    titleHeader.textContent = `${userName}'s Bucket List ✅`;
-  }
-  sortAndSave();
+
+  userName = newUser;
+  userNameInput.value = newUser;
+  todoList = newTodo.length ? newTodo : [];
+  doneList = newDone.length ? newDone : [];
+  updateTitle();
+  saveData();
+  renderList();
 }
 
-function exportToImage() {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const padding = 20;
-  const lineHeight = 24;
-  const width = 600;
-  const titleHeight = 40;
-  const dateHeight = 20;
-  const sectionTitleHeight = 30;
-  const todoHeight = todoListData.length * lineHeight;
-  const completedHeight = completedListData.length * lineHeight;
-  const height = padding*2 + titleHeight + dateHeight + sectionTitleHeight*2 + todoHeight + completedHeight + 40;
-
-  canvas.width = width;
-  canvas.height = height;
-
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, width, height);
-
-  ctx.fillStyle = '#000';
-  ctx.font = 'bold 24px Arial';
-  ctx.textBaseline = 'top';
-  ctx.fillText(`${userName ? userName + "'s" : 'My'} Bucket List ✅`, padding, padding);
-
-  const today = new Date();
-  const dateStr = today.toLocaleDateString();
-  ctx.font = '14px Arial';
-  ctx.fillText(`Exported on: ${dateStr}`, padding, padding + titleHeight);
-
-  ctx.font = 'bold 18px Arial';
-  ctx.fillText('Things to Do:', padding, padding + titleHeight + dateHeight + 10);
-
-  ctx.font = '16px Arial';
-  todoListData.forEach((item, i) => {
-    ctx.fillText(`${i+1}. ${item}`, padding + 10, padding + titleHeight + dateHeight + sectionTitleHeight + i * lineHeight);
+exportBtn.addEventListener('click', () => {
+  let lines = [];
+  if(userName){
+    lines.push(`${userName}'s Bucket List`);
+  } else {
+    lines.push('My Bucket List');
+  }
+  lines.push(`Exported on: ${new Date().toLocaleDateString()}`);
+  lines.push('');
+  lines.push('Things to Do:');
+  todoList.forEach((item,i) => {
+    lines.push(`${i+1}. ${item}`);
+  });
+  lines.push('');
+  lines.push('Completed:');
+  doneList.forEach((item,i) => {
+    lines.push(`${i+1}. ${item}`);
   });
 
-  const completedY = padding + titleHeight + dateHeight + sectionTitleHeight + todoHeight + 40;
-  ctx.font = 'bold 18px Arial';
-  ctx.fillText('Completed:', padding, completedY);
+  const blob = new Blob([lines.join('\n')], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bucket_list_export.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+});
 
-  ctx.font = '16px Arial';
-  completedListData.forEach((item, i) => {
-    ctx.fillText(`${i+1}. ${item}`, padding + 10, completedY + sectionTitleHeight + i * lineHeight);
-  });
-
-  const link = document.createElement('a');
-  link.download = `bucketlist_${(userName || 'my').replace(/\s+/g,'_').toLowerCase()}_${dateStr.replace(/\//g,'-')}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-}
-
-exportImageBtn.addEventListener('click', exportToImage);
-
+// 初始化
 loadData();
-renderLists();
+renderList();
 
 </script>
+
 </body>
 </html>
