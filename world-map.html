@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Travel Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; background: #f7f7fa; margin: 0; }
+    .container { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 18px 0 0; }
+    h1 { text-align: center; font-size: 2rem; margin-bottom: 0.5em; font-weight: 600; }
+    .count-box { text-align: right; margin-right: 40px; font-size: 1.1em; color: #888; }
+    .legend { margin: 20px 0 10px 0; text-align: center; }
+    .legend span { display: inline-block; margin: 0 15px; }
+    .legend .visited { color: #79b700; font-weight: bold; }
+    .legend .wishlist { color: #fbbc05; font-weight: bold; }
+    .legend .none { color: #aaa; }
+    #map { width: 100%; max-width: 1100px; margin: auto; display: block; background: #fff; }
+    svg .country { cursor: pointer; transition: fill 0.2s; stroke: #fff; stroke-width: 1.2; }
+    svg .visited { fill: #79b700 !important; }
+    svg .wishlist { fill: #ffe066 !important; }
+    svg .none { fill: #e0e0e0 !important; }
+    .country-list-section { padding: 0 24px 24px; }
+    #search { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 1em; }
+    .country-list { max-height: 340px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; background: #fafafc; }
+    .country-row { display: flex; align-items: center; padding: 7px 10px; border-bottom: 1px solid #f2f2f2; }
+    .country-row:last-child { border-bottom: none; }
+    .country-row label { flex: 1; cursor: pointer; }
+    .country-actions button { margin-left: 5px; border: none; background: none; font-size: 1.1em; cursor: pointer; }
+    .country-actions .visited { color: #79b700; }
+    .country-actions .wishlist { color: #fbbc05; }
+    .country-actions .none { color: #aaa; }
+    .country-flag { font-size: 1.3em; margin-right: 10px; }
+    .country-status { width: 32px; text-align: right; }
+    .visited-count { color: #79b700; font-weight: bold; }
+    @media (max-width: 600px) {
+      .container { border-radius: 0; padding: 0 0 8px; }
+      #map { max-width: 100vw; }
+      .country-list-section { padding: 0 8px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mark O'Travel</h1>
+    <div class="legend">
+      <span class="visited">■ Visited</span>
+      <span class="wishlist">■ Wishlist</span>
+      <span class="none">■ Not Marked</span>
+    </div>
+    <div class="count-box">
+      <span id="visitedCount" class="visited-count">0</span>/<span id="totalCountries">195</span>
+    </div>
+    <svg id="map" viewBox="0 0 2200 1100" style="border-radius:8px;">
+      <!-- Sample: Only a few blocks shown, add all 195 below in similar style with unique ISO code and position -->
+      <g><title>Canada</title><rect id="CA" class="country none" x="250" y="80" width="300" height="120"/></g>
+      <g><title>United States</title><rect id="US" class="country none" x="270" y="220" width="300" height="100"/></g>
+      <g><title>Mexico</title><rect id="MX" class="country none" x="320" y="350" width="180" height="80"/></g>
+      <g><title>Brazil</title><rect id="BR" class="country none" x="1100" y="700" width="220" height="120"/></g>
+      <g><title>United Kingdom</title><rect id="GB" class="country none" x="1250" y="120" width="80" height="40"/></g>
+      <g><title>Russia</title><rect id="RU" class="country none" x="1500" y="90" width="180" height="100"/></g>
+      <g><title>China</title><rect id="CN" class="country none" x="1800" y="270" width="130" height="100"/></g>
+      <g><title>India</title><rect id="IN" class="country none" x="1700" y="400" width="80" height="55"/></g>
+      <g><title>Vatican City</title><rect id="VA" class="country none" x="1905" y="220" width="20" height="15"/></g>
+      <g><title>Palestine</title><rect id="PS" class="country none" x="1540" y="350" width="40" height="32"/></g>
+      <!-- ...(repeat for all 195, each with unique code & approx position for your map layout)... -->
+    </svg>
+    <div class="country-list-section">
+      <input id="search" type="text" placeholder="Search country..." />
+      <div class="country-list" id="countryList"></div>
+    </div>
+  </div>
+  <script>
+    // 195 countries (UN member states + Vatican + Palestine, NO Taiwan, NO Kosovo)
+    const countries = [
+      // Africa
+      { code: "DZ", name: "Algeria", flag: "🇩🇿" }, { code: "AO", name: "Angola", flag: "🇦🇴" }, { code: "BJ", name: "Benin", flag: "🇧🇯" }, { code: "BW", name: "Botswana", flag: "🇧🇼" }, { code: "BF", name: "Burkina Faso", flag: "🇧🇫" }, { code: "BI", name: "Burundi", flag: "🇧🇮" }, { code: "CV", name: "Cabo Verde", flag: "🇨🇻" }, { code: "CM", name: "Cameroon", flag: "🇨🇲" }, { code: "CF", name: "Central African Republic", flag: "🇨🇫" }, { code: "TD", name: "Chad", flag: "🇹🇩" }, { code: "KM", name: "Comoros", flag: "🇰🇲" }, { code: "CD", name: "Congo (Congo-Kinshasa)", flag: "🇨🇩" }, { code: "CG", name: "Congo (Congo-Brazzaville)", flag: "🇨🇬" }, { code: "CI", name: "Côte d’Ivoire", flag: "🇨🇮" }, { code: "DJ", name: "Djibouti", flag: "🇩🇯" }, { code: "EG", name: "Egypt", flag: "🇪🇬" }, { code: "GQ", name: "Equatorial Guinea", flag: "🇬🇶" }, { code: "ER", name: "Eritrea", flag: "🇪🇷" }, { code: "SZ", name: "Eswatini", flag: "🇸🇿" }, { code: "ET", name: "Ethiopia", flag: "🇪🇹" }, { code: "GA", name: "Gabon", flag: "🇬🇦" }, { code: "GM", name: "Gambia", flag: "🇬🇲" }, { code: "GH", name: "Ghana", flag: "🇬🇭" }, { code: "GN", name: "Guinea", flag: "🇬🇳" }, { code: "GW", name: "Guinea-Bissau", flag: "🇬🇼" }, { code: "KE", name: "Kenya", flag: "🇰🇪" }, { code: "LS", name: "Lesotho", flag: "🇱🇸" }, { code: "LR", name: "Liberia", flag: "🇱🇷" }, { code: "LY", name: "Libya", flag: "🇱🇾" }, { code: "MG", name: "Madagascar", flag: "🇲🇬" }, { code: "MW", name: "Malawi", flag: "🇲🇼" }, { code: "ML", name: "Mali", flag: "🇲🇱" }, { code: "MR", name: "Mauritania", flag: "🇲🇷" }, { code: "MU", name: "Mauritius", flag: "🇲🇺" }, { code: "MA", name: "Morocco", flag: "🇲🇦" }, { code: "MZ", name: "Mozambique", flag: "🇲🇿" }, { code: "NA", name: "Namibia", flag: "🇳🇦" }, { code: "NE", name: "Niger", flag: "🇳🇪" }, { code: "NG", name: "Nigeria", flag: "🇳🇬" }, { code: "RW", name: "Rwanda", flag: "🇷🇼" }, { code: "ST", name: "Sao Tome and Principe", flag: "🇸🇹" }, { code: "SN", name: "Senegal", flag: "🇸🇳" }, { code: "SC", name: "Seychelles", flag: "🇸🇨" }, { code: "SL", name: "Sierra Leone", flag: "🇸🇱" }, { code: "SO", name: "Somalia", flag: "🇸🇴" }, { code: "ZA", name: "South Africa", flag: "🇿🇦" }, { code: "SS", name: "South Sudan", flag: "🇸🇸" }, { code: "SD", name: "Sudan", flag: "🇸🇩" }, { code: "TZ", name: "Tanzania", flag: "🇹🇿" }, { code: "TG", name: "Togo", flag: "🇹🇬" }, { code: "TN", name: "Tunisia", flag: "🇹🇳" }, { code: "UG", name: "Uganda", flag: "🇺🇬" }, { code: "EH", name: "Western Sahara", flag: "🇪🇭" }, { code: "ZM", name: "Zambia", flag: "🇿🇲" }, { code: "ZW", name: "Zimbabwe", flag: "🇿🇼" },
+      // Asia
+      { code: "AF", name: "Afghanistan", flag: "🇦🇫" }, { code: "AM", name: "Armenia", flag: "🇦🇲" }, { code: "AZ", name: "Azerbaijan", flag: "🇦🇿" }, { code: "BH", name: "Bahrain", flag: "🇧🇭" }, { code: "BD", name: "Bangladesh", flag: "🇧🇩" }, { code: "BT", name: "Bhutan", flag: "🇧🇹" }, { code: "BN", name: "Brunei", flag: "🇧🇳" }, { code: "KH", name: "Cambodia", flag: "🇰🇭" }, { code: "CN", name: "China", flag: "🇨🇳" }, { code: "CY", name: "Cyprus", flag: "🇨🇾" }, { code: "GE", name: "Georgia", flag: "🇬🇪" }, { code: "IN", name: "India", flag: "🇮🇳" }, { code: "ID", name: "Indonesia", flag: "🇮🇩" }, { code: "IR", name: "Iran", flag: "🇮🇷" }, { code: "IQ", name: "Iraq", flag: "🇮🇶" }, { code: "IL", name: "Israel", flag: "🇮🇱" }, { code: "JP", name: "Japan", flag: "🇯🇵" }, { code: "JO", name: "Jordan", flag: "🇯🇴" }, { code: "KZ", name: "Kazakhstan", flag: "🇰🇿" }, { code: "KW", name: "Kuwait", flag: "🇰🇼" }, { code: "KG", name: "Kyrgyzstan", flag: "🇰🇬" }, { code: "LA", name: "Laos", flag: "🇱🇦" }, { code: "LB", name: "Lebanon", flag: "🇱🇧" }, { code: "MY", name: "Malaysia", flag: "🇲🇾" }, { code: "MV", name: "Maldives", flag: "🇲🇻" }, { code: "MN", name: "Mongolia", flag: "🇲🇳" }, { code: "MM", name: "Myanmar", flag: "🇲🇲" }, { code: "NP", name: "Nepal", flag: "🇳🇵" }, { code: "KP", name: "North Korea", flag: "🇰🇵" }, { code: "OM", name: "Oman", flag: "🇴🇲" }, { code: "PK", name: "Pakistan", flag: "🇵🇰" }, { code: "PS", name: "Palestine", flag: "🇵🇸" }, { code: "PH", name: "Philippines", flag: "🇵🇭" }, { code: "QA", name: "Qatar", flag: "🇶🇦" }, { code: "SA", name: "Saudi Arabia", flag: "🇸🇦" }, { code: "SG", name: "Singapore", flag: "🇸🇬" }, { code: "KR", name: "South Korea", flag: "🇰🇷" }, { code: "LK", name: "Sri Lanka", flag: "🇱🇰" }, { code: "SY", name: "Syria", flag: "🇸🇾" }, { code: "TJ", name: "Tajikistan", flag: "🇹🇯" }, { code: "TH", name: "Thailand", flag: "🇹🇭" }, { code: "TL", name: "Timor-Leste", flag: "🇹🇱" }, { code: "TR", name: "Turkey", flag: "🇹🇷" }, { code: "TM", name: "Turkmenistan", flag: "🇹🇲" }, { code: "AE", name: "United Arab Emirates", flag: "🇦🇪" }, { code: "UZ", name: "Uzbekistan", flag: "🇺🇿" }, { code: "VN", name: "Vietnam", flag: "🇻🇳" }, { code: "YE", name: "Yemen", flag: "🇾🇪" },
+      // Europe
+      { code: "AL", name: "Albania", flag: "🇦🇱" }, { code: "AD", name: "Andorra", flag: "🇦🇩" }, { code: "AT", name: "Austria", flag: "🇦🇹" }, { code: "BY", name: "Belarus", flag: "🇧🇾" }, { code: "BE", name: "Belgium", flag: "🇧🇪" }, { code: "BA", name: "Bosnia and Herzegovina", flag: "🇧🇦" }, { code: "BG", name: "Bulgaria", flag: "🇧🇬" }, { code: "HR", name: "Croatia", flag: "🇭🇷" }, { code: "CZ", name: "Czechia", flag: "🇨🇿" }, { code: "DK", name: "Denmark", flag: "🇩🇰" }, { code: "EE", name: "Estonia", flag: "🇪🇪" }, { code: "FI", name: "Finland", flag: "🇫🇮" }, { code: "FR", name: "France", flag: "🇫🇷" }, { code: "DE", name: "Germany", flag: "🇩🇪" }, { code: "GR", name: "Greece", flag: "🇬🇷" }, { code: "HU", name: "Hungary", flag: "🇭🇺" }, { code: "IS", name: "Iceland", flag: "🇮🇸" }, { code: "IE", name: "Ireland", flag: "🇮🇪" }, { code: "IT", name: "Italy", flag: "🇮🇹" }, { code: "LV", name: "Latvia", flag: "🇱🇻" }, { code: "LI", name: "Liechtenstein", flag: "🇱🇮" }, { code: "LT", name: "Lithuania", flag: "🇱🇹" }, { code: "LU", name: "Luxembourg", flag: "🇱🇺" }, { code: "MT", name: "Malta", flag: "🇲🇹" }, { code: "MD", name: "Moldova", flag: "🇲🇩" }, { code: "MC", name: "Monaco", flag: "🇲🇨" }, { code: "ME", name: "Montenegro", flag: "🇲🇪" }, { code: "NL", name: "Netherlands", flag: "🇳🇱" }, { code: "MK", name: "North Macedonia", flag: "🇲🇰" }, { code: "NO", name: "Norway", flag: "🇳🇴" }, { code: "PL", name: "Poland", flag: "🇵🇱" }, { code: "PT", name: "Portugal", flag: "🇵🇹" }, { code: "RO", name: "Romania", flag: "🇷🇴" }, { code: "RU", name: "Russia", flag: "🇷🇺" }, { code: "SM", name: "San Marino", flag: "🇸🇲" }, { code: "RS", name: "Serbia", flag: "🇷🇸" }, { code: "SK", name: "Slovakia", flag: "🇸🇰" }, { code: "SI", name: "Slovenia", flag: "🇸🇮" }, { code: "ES", name: "Spain", flag: "🇪🇸" }, { code: "SE", name: "Sweden", flag: "🇸🇪" }, { code: "CH", name: "Switzerland", flag: "🇨🇭" }, { code: "UA", name: "Ukraine", flag: "🇺🇦" }, { code: "GB", name: "United Kingdom", flag: "🇬🇧" }, { code: "VA", name: "Vatican City", flag: "🇻🇦" },
+      // North America
+      { code: "AG", name: "Antigua and Barbuda", flag: "🇦🇬" }, { code: "BS", name: "Bahamas", flag: "🇧🇸" }, { code: "BB", name: "Barbados", flag: "🇧🇧" }, { code: "BZ", name: "Belize", flag: "🇧🇿" }, { code: "CA", name: "Canada", flag: "🇨🇦" }, { code: "CR", name: "Costa Rica", flag: "🇨🇷" }, { code: "CU", name: "Cuba", flag: "🇨🇺" }, { code: "DM", name: "Dominica", flag: "🇩🇲" }, { code: "DO", name: "Dominican Republic", flag: "🇩🇴" }, { code: "SV", name: "El Salvador", flag: "🇸🇻" }, { code: "GD", name: "Grenada", flag: "🇬🇩" }, { code: "GT", name: "Guatemala", flag: "🇬🇹" }, { code: "HT", name: "Haiti", flag: "🇭🇹" }, { code: "HN", name: "Honduras", flag: "🇭🇳" }, { code: "JM", name: "Jamaica", flag: "🇯🇲" }, { code: "MX", name: "Mexico", flag: "🇲🇽" }, { code: "NI", name: "Nicaragua", flag: "🇳🇮" }, { code: "PA", name: "Panama", flag: "🇵🇦" }, { code: "KN", name: "Saint Kitts and Nevis", flag: "🇰🇳" }, { code: "LC", name: "Saint Lucia", flag: "🇱🇨" }, { code: "VC", name: "Saint Vincent and the Grenadines", flag: "🇻🇨" }, { code: "TT", name: "Trinidad and Tobago", flag: "🇹🇹" }, { code: "US", name: "United States", flag: "🇺🇸" },
+      // Oceania
+      { code: "AU", name: "Australia", flag: "🇦🇺" }, { code: "FJ", name: "Fiji", flag: "🇫🇯" }, { code: "KI", name: "Kiribati", flag: "🇰🇮" }, { code: "MH", name: "Marshall Islands", flag: "🇲🇭" }, { code: "FM", name: "Micronesia", flag: "🇫🇲" }, { code: "NR", name: "Nauru", flag: "🇳🇷" }, { code: "NZ", name: "New Zealand", flag: "🇳🇿" }, { code: "PW", name: "Palau", flag: "🇵🇼" }, { code: "PG", name: "Papua New Guinea", flag: "🇵🇬" }, { code: "WS", name: "Samoa", flag: "🇼🇸" }, { code: "SB", name: "Solomon Islands", flag: "🇸🇧" }, { code: "TO", name: "Tonga", flag: "🇹🇴" }, { code: "TV", name: "Tuvalu", flag: "🇹🇻" }, { code: "VU", name: "Vanuatu", flag: "🇻🇺" },
+      // South America
+      { code: "AR", name: "Argentina", flag: "🇦🇷" }, { code: "BO", name: "Bolivia", flag: "🇧🇴" }, { code: "BR", name: "Brazil", flag: "🇧🇷" }, { code: "CL", name: "Chile", flag: "🇨🇱" }, { code: "CO", name: "Colombia", flag: "🇨🇴" }, { code: "EC", name: "Ecuador", flag: "🇪🇨" }, { code: "GY", name: "Guyana", flag: "🇬🇾" }, { code: "PY", name: "Paraguay", flag: "🇵🇾" }, { code: "PE", name: "Peru", flag: "🇵🇪" }, { code: "SR", name: "Suriname", flag: "🇸🇷" }, { code: "UY", name: "Uruguay", flag: "🇺🇾" }, { code: "VE", name: "Venezuela", flag: "🇻🇪" }
+    ];
+    let mapState = {};
+    if (localStorage.getItem('travelMapState')) {
+      mapState = JSON.parse(localStorage.getItem('travelMapState'));
+    }
+    function nextState(current) {
+      if (current === 'none') return 'visited';
+      if (current === 'visited') return 'wishlist';
+      return 'none';
+    }
+    function renderMap() {
+      countries.forEach(({ code }) => {
+        const el = document.getElementById(code);
+        if (el) {
+          el.classList.remove('visited', 'wishlist', 'none');
+          el.classList.add(mapState[code] || 'none');
+        }
+      });
+    }
+    function renderList(filter = "") {
+      const listEl = document.getElementById('countryList');
+      listEl.innerHTML = "";
+      countries
+        .filter(c => c.name.toLowerCase().includes(filter.toLowerCase()))
+        .forEach(country => {
+          const state = mapState[country.code] || 'none';
+          const row = document.createElement('div');
+          row.className = "country-row";
+          row.innerHTML = `
+            <span class="country-flag">${country.flag}</span>
+            <label>${country.name}</label>
+            <span class="country-actions">
+              <button class="visited" data-code="${country.code}" data-action="visited" title="Visited">✔️</button>
+              <button class="wishlist" data-code="${country.code}" data-action="wishlist" title="Wishlist">⭐</button>
+              <button class="none" data-code="${country.code}" data-action="none" title="Unmark">⨉</button>
+            </span>
+            <span class="country-status">${state==='visited'?'✔️':state==='wishlist'?'⭐':''}</span>
+          `;
+          listEl.appendChild(row);
+        });
+    }
+    function updateCount() {
+      const count = Object.values(mapState).filter(v => v === 'visited').length;
+      document.getElementById('visitedCount').textContent = count;
+      document.getElementById('totalCountries').textContent = countries.length;
+    }
+    document.getElementById('countryList').addEventListener('click', e => {
+      if (e.target.dataset.code) {
+        mapState[e.target.dataset.code] = e.target.dataset.action;
+        renderMap();
+        renderList(document.getElementById('search').value);
+        updateCount();
+        localStorage.setItem('travelMapState', JSON.stringify(mapState));
+      }
+    });
+    document.getElementById('map').addEventListener('click', e => {
+      if (e.target.classList.contains('country')) {
+        const code = e.target.id;
+        mapState[code] = nextState(mapState[code] || 'none');
+        renderMap();
+        renderList(document.getElementById('search').value);
+        updateCount();
+        localStorage.setItem('travelMapState', JSON.stringify(mapState));
+      }
+    });
+    document.getElementById('search').addEventListener('input', e => {
+      renderList(e.target.value);
+    });
+    renderMap();
+    renderList();
+    updateCount();
+  </script>
+</body>
+</html>
