@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>晚饭吃啥抽签器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', sans-serif;
+      background: linear-gradient(to right, #ffeaa7, #fab1a0);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      padding: 40px 50px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    h1 {
+      font-size: 32px;
+      color: #2d3436;
+      margin-bottom: 30px;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 12px 36px;
+      background: linear-gradient(135deg, #6c5ce7, #00b894);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    #result {
+      font-size: 26px;
+      margin-top: 40px;
+      color: #d63031;
+      min-height: 60px;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    #result.show {
+      opacity: 1;
+      animation: pop 0.4s ease;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0.8);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>今天晚饭吃啥？</h1>
+    <button onclick="drawDinner()">抽一个！</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+
+const options = [
+  "🍚 家常菜（红烧肉、青椒土豆丝）",
+  "🍜 兰州拉面",
+  "🥞 煎饼果子",
+  "🍢 烧烤（东北烧烤）",
+  "🔥 火锅（川渝牛油锅）",
+  "🥩 潮汕牛肉火锅",
+  "🥟 广州茶餐厅 / 肠粉",
+  "🐖 粤式烧腊（烧鸭、叉烧）",
+  "🍲 云南过桥米线",
+  "🌶️ 四川冒菜 / 麻辣烫",
+  "🍗 新疆大盘鸡 / 烤羊肉串",
+  "🥘 东北炖菜",
+  "🦐 上海本帮菜",
+  "🍜 闽南沙茶面",
+  "🥬 客家菜（酿豆腐）",
+  "🍕 意大利披萨 / 意面",
+  "🥩 西式牛排 / 烤鸡",
+  "🍔 汉堡薯条套餐",
+  "🥗 健康沙拉 / 轻食",
+  "🌭 德国香肠拼盘",
+  "🥙 希腊Kebab卷",
+  "🌮 墨西哥Taco / Burrito",
+  "🍛 泰国冬阴功 / 炒河粉",
+  "🍲 越南河粉 / 春卷",
+  "🍛 印度咖喱 / Naan",
+  "🍳 印尼炒饭 / 沙嗲串",
+  "🍜 马来西亚叻沙",
+  "🍣 寿司 / 日式拉面",
+  "🍢 日式居酒屋",
+  "🍲 韩式泡菜锅 / 拌饭",
+  "🍷 西班牙Tapas拼盘",
+  "🥘 Paella海鲜饭",
+  "🥖 西班牙三明治",
+  "🦑 炸鱿鱼圈",
+  "🥡 便利店 / 冷冻食品",
+  "📱 外卖平台随便点",
+  "🥗 清冰箱自己做",
+  "🍷 不吃了喝点酒",
+  "🚶 随便走进一家店"
+];
+
+    function drawDinner() {
+      const result = document.getElementById("result");
+      const randomIndex = Math.floor(Math.random() * options.length);
+      const choice = options[randomIndex];
+      result.innerText = `就吃你了：${choice}`;
+      result.classList.remove("show"); // Reset
+      setTimeout(() => result.classList.add("show"), 50); // Trigger animation
+    }
+  </script>
+</body>
+</html>
