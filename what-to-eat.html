@@ -2,48 +2,48 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>晚饭吃啥抽签器</title>
+  <title>晚饭吃啥？What to Eat Tonight</title>
+  <meta name="description" content="不知道晚饭吃什么？美食抽签器帮你做决定！中餐、西餐、火锅、寿司、烧烤…随机推荐让你不再纠结。">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Helvetica Neue', sans-serif;
       background: linear-gradient(to right, #ffeaa7, #fab1a0);
-      height: 100vh;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+      padding: 40px 20px;
     }
 
     .card {
-      background: #ffffff;
+      background: #fff;
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      padding: 40px 50px;
+      padding: 30px 40px;
+      max-width: 550px;
+      width: 100%;
       text-align: center;
-      max-width: 500px;
-      width: 90%;
     }
 
     h1 {
-      font-size: 32px;
+      font-size: 30px;
       color: #2d3436;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
     button {
-      font-size: 20px;
-      padding: 12px 36px;
+      font-size: 18px;
+      padding: 12px 28px;
       background: linear-gradient(135deg, #6c5ce7, #00b894);
       color: white;
       border: none;
       border-radius: 30px;
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
+      margin: 10px 5px;
     }
 
     button:hover {
@@ -52,87 +52,95 @@
     }
 
     #result {
-      font-size: 26px;
-      margin-top: 40px;
+      font-size: 24px;
+      margin-top: 30px;
+      min-height: 40px;
       color: #d63031;
-      min-height: 60px;
-      opacity: 0;
-      transition: opacity 0.6s ease;
     }
 
-    #result.show {
-      opacity: 1;
-      animation: pop 0.4s ease;
+    #food-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
     }
 
-    @keyframes pop {
-      0% {
-        transform: scale(0.8);
-      }
-      100% {
-        transform: scale(1);
-      }
+    .button-group {
+      margin-top: 20px;
+      display: none;
     }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>今天晚饭吃啥？</h1>
-    <button onclick="drawDinner()">抽一个！</button>
+
+    <button id="draw-button" onclick="drawDinner()">抽一个！</button>
+
     <div id="result"></div>
+    <img id="food-img" src="" />
+
+    <div class="button-group" id="result-buttons">
+      <button onclick="drawDinner()">不行，再抽一次</button>
+      <button onclick="copyShare()">好的，发给好友</button>
+    </div>
   </div>
 
   <script>
+    const reactions = ["听起来不错～", "今晚就吃它吧！", "安排上了！", "这个好吃！", "嗯嗯可以！", "非它莫属～"];
 
-const options = [
-  "🍚 家常菜（红烧肉、青椒土豆丝）",
-  "🍜 兰州拉面",
-  "🥞 煎饼果子",
-  "🍢 烧烤（东北烧烤）",
-  "🔥 火锅（川渝牛油锅）",
-  "🥩 潮汕牛肉火锅",
-  "🥟 广州茶餐厅 / 肠粉",
-  "🐖 粤式烧腊（烧鸭、叉烧）",
-  "🍲 云南过桥米线",
-  "🌶️ 四川冒菜 / 麻辣烫",
-  "🍗 新疆大盘鸡 / 烤羊肉串",
-  "🥘 东北炖菜",
-  "🦐 上海本帮菜",
-  "🍜 闽南沙茶面",
-  "🥬 客家菜（酿豆腐）",
-  "🍕 意大利披萨 / 意面",
-  "🥩 西式牛排 / 烤鸡",
-  "🍔 汉堡薯条套餐",
-  "🥗 健康沙拉 / 轻食",
-  "🌭 德国香肠拼盘",
-  "🥙 希腊Kebab卷",
-  "🌮 墨西哥Taco / Burrito",
-  "🍛 泰国冬阴功 / 炒河粉",
-  "🍲 越南河粉 / 春卷",
-  "🍛 印度咖喱 / Naan",
-  "🍳 印尼炒饭 / 沙嗲串",
-  "🍜 马来西亚叻沙",
-  "🍣 寿司 / 日式拉面",
-  "🍢 日式居酒屋",
-  "🍲 韩式泡菜锅 / 拌饭",
-  "🍷 西班牙Tapas拼盘",
-  "🥘 Paella海鲜饭",
-  "🥖 西班牙三明治",
-  "🦑 炸鱿鱼圈",
-  "🥡 便利店 / 冷冻食品",
-  "📱 外卖平台随便点",
-  "🥗 清冰箱自己做",
-  "🍷 不吃了喝点酒",
-  "🚶 随便走进一家店"
-];
+    const allOptions = [
+      { text: "🍚 家常菜（红烧肉）", img: "https://source.unsplash.com/400x300/?chinese-food" },
+      { text: "🍜 兰州拉面", img: "https://source.unsplash.com/400x300/?noodles" },
+      { text: "🍢 烧烤（东北）", img: "https://source.unsplash.com/400x300/?bbq" },
+      { text: "🥩 潮汕牛肉火锅", img: "https://source.unsplash.com/400x300/?hotpot" },
+      { text: "🍕 意大利披萨", img: "https://source.unsplash.com/400x300/?pizza" },
+      { text: "🍔 汉堡套餐", img: "https://source.unsplash.com/400x300/?burger" },
+      { text: "🍣 寿司", img: "https://source.unsplash.com/400x300/?sushi" },
+      { text: "🍲 韩式泡菜锅", img: "https://source.unsplash.com/400x300/?korean-food" },
+      { text: "🍛 印度咖喱", img: "https://source.unsplash.com/400x300/?curry" },
+      { text: "🌶️ 泰国炒粉", img: "https://source.unsplash.com/400x300/?thai-food" },
+      { text: "🥘 西班牙海鲜饭", img: "https://source.unsplash.com/400x300/?paella" },
+      { text: "📱 外卖随机点", img: "https://source.unsplash.com/400x300/?delivery" },
+      { text: "🍷 不吃了喝点酒", img: "https://source.unsplash.com/400x300/?wine" },
+      { text: "🚶 随便走进一家店", img: "https://source.unsplash.com/400x300/?restaurant" }
+    ];
 
     function drawDinner() {
       const result = document.getElementById("result");
-      const randomIndex = Math.floor(Math.random() * options.length);
-      const choice = options[randomIndex];
-      result.innerText = `就吃你了：${choice}`;
-      result.classList.remove("show"); // Reset
-      setTimeout(() => result.classList.add("show"), 50); // Trigger animation
+      const img = document.getElementById("food-img");
+      const drawBtn = document.getElementById("draw-button");
+      const resultBtns = document.getElementById("result-buttons");
+
+      let count = 0;
+      const maxCount = 10;
+
+      drawBtn.style.display = "none";
+      resultBtns.style.display = "none";
+      result.innerText = "思考中...";
+      img.style.display = "none";
+
+      const rolling = setInterval(() => {
+        const temp = allOptions[Math.floor(Math.random() * allOptions.length)];
+        result.innerText = `思考中... ${temp.text}`;
+        count++;
+        if (count >= maxCount) {
+          clearInterval(rolling);
+          const choice = allOptions[Math.floor(Math.random() * allOptions.length)];
+          const reaction = reactions[Math.floor(Math.random() * reactions.length)];
+          result.innerText = `${reaction} ${choice.text}`;
+          img.src = choice.img;
+          img.style.display = "block";
+          resultBtns.style.display = "block";
+        }
+      }, 100);
+    }
+
+    function copyShare() {
+      const resultText = document.getElementById("result").innerText;
+      navigator.clipboard.writeText(`${resultText} 👉 https://enfysluk.github.io/what-to-eat.html`);
+      alert("结果已复制！快分享给朋友吧 🍽️");
     }
   </script>
 </body>
