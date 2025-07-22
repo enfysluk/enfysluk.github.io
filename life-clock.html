@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>生命时钟</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Arial', sans-serif; text-align: center; padding: 20px; background: #f4f4f4; color: #333; }
+        h1 { color: #ffcc00; }
+        .clock { margin-top: 20px; font-size: 1.2em; }
+        input, button { padding: 10px; margin: 10px; font-size: 1em; }
+        .switch { margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <h1>⏳ 生命时钟</h1>
+    <div>
+        <label>出生日期：<input type="date" id="birthDate"></label><br>
+        <label>预期寿命（岁）：<input type="number" id="lifeExpectancy" value="80"></label><br>
+        <button onclick="calculate()">开始计算</button>
+    </div>
+    <div class="clock" id="result" style="display:none;">
+        <div id="lifeData"></div>
+        <div class="switch">
+            <button onclick="toggle()">切换“生之时 / 死之钟”</button>
+        </div>
+    </div>
+
+    <script>
+        let showLife = true;
+        let stats = null;
+
+        function calculate() {
+            const birthStr = document.getElementById("birthDate").value;
+            const life = parseInt(document.getElementById("lifeExpectancy").value);
+            if (!birthStr || isNaN(life)) {
+                alert("请输入完整信息");
+                return;
+            }
+
+            const birth = new Date(birthStr);
+            const now = new Date();
+            const death = new Date(birth);
+            death.setFullYear(death.getFullYear() + life);
+
+            const livedMs = now - birth;
+            const remainingMs = death - now;
+
+            stats = {
+                lived: msToTime(livedMs),
+                remaining: msToTime(remainingMs)
+            };
+
+            showLife = true;
+            updateDisplay();
+            document.getElementById("result").style.display = "block";
+        }
+
+        function msToTime(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const hours = Math.floor(ms / 3600000);
+            const days = Math.floor(ms / (3600000 * 24));
+            const years = Math.floor(days / 365.25);
+            const months = Math.floor((days % 365.25) / 30.4);
+            const weeks = Math.floor(days / 7);
+            return { years, months, weeks, days, hours, minutes };
+        }
+
+        function toggle() {
+            showLife = !showLife;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const data = showLife ? stats.lived : stats.remaining;
+            const label = showLife ? "你已经活了：" : "你还可以活：";
+            const msg = `
+                <h2>${label}</h2>
+                <p>${data.years} 年 ${data.months} 月</p>
+                <p>${data.days} 天 / ${data.hours} 小时 / ${data.minutes} 分钟</p>
+            `;
+            document.getElementById("lifeData").innerHTML = msg;
+        }
+    </script>
+</body>
+</html>
