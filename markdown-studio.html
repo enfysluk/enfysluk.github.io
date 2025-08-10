@@ -17,7 +17,7 @@
 
 <div id="toolbar">
   <button onclick="downloadMD()">Export .md</button>
-  <button onclick="downloadPDF()">Export PDF</button>
+  <button onclick="exportPDF()">Export PDF</button>
 </div>
 
 <textarea id="editor" oninput="updatePreview()">
@@ -41,7 +41,8 @@ function generateTOC(md) {
         if (match) {
             const level = match[1].length;
             const text = match[2];
-            const anchor = text.toLowerCase().replace(/[^\w]+/g, "-");
+            const anchor = text.toLowerCase().replace(/[^
+\w]+/g, "-");
             toc += `<li style="margin-left:${(level-1)*10}px"><a href="#${anchor}">${text}</a></li>`;
         }
     });
@@ -57,9 +58,13 @@ function downloadMD() {
     a.href = url;
     a.download = "document.md";
     a.click();
+    URL.revokeObjectURL(url);
 }
 
+// This is the correct name for the export function
 function exportPDF() {
+    // Ensure preview is up-to-date before exporting
+    updatePreview();
     const element = document.getElementById('preview');
     const opt = {
         margin:       0.5,
