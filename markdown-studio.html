@@ -1,114 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Markdown Editor</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Markdown Studio</title>
+
+<!-- Markdown 解析 -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+
 <style>
-  body {display: flex; height: 100vh; margin: 0; font-family: sans-serif;}
-  textarea {width: 50%; padding: 10px; font-family: monospace; font-size: 14px;}
-  #preview {width: 50%; padding: 10px; overflow-y: auto; border-left: 1px solid #ccc;}
-  #toolbar {position: fixed; top: 10px; right: 20px; background: #fff; padding: 5px; border: 1px solid #ccc;}
-  #toc {margin-bottom: 20px; font-size: 14px;}
+  :root { --split: 50%; --gap: 10px; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; font-family: system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #111; color: #eee;
+  }
+  textarea {
+    width: var(--split); padding: 12px; border: 0; outline: none; resize: none;
+    background:#0d0d0d; color:#eee; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  }
+  #right {
+    width: calc(100% - var(--split)); display: flex; flex-direction: column; border-left: 1px solid #222;
+  }
+  #toolbar {
+    display:flex; gap:8px; padding:8px; background:#0d0d0d; border-bottom:1px solid #222; position: sticky; top:0; z-index: 2;
+  }
+  #toolbar button {
+    background:#1a1a1a; color:#ddd; border:1px solid #333; padding:6px 10px; border-radius:6px; cursor:pointer;
+  }
+  #toolbar button:hover { background:#222; }
+  #previewWrap { padding: 12px; overflow:auto; height:100%; }
+  #preview { max-width: 960px; margin: 0 auto; }
+
+  /* markdown 基础样式（预览） */
+  #preview h1, #preview h2, #preview h3 { border-bottom: 1px solid #2a2a2a; padding-bottom: 4px; }
+  #preview a { color:#8ab4ff; text-decoration:none; }
+  #preview a:hover { text-decoration:underline; }
+  #preview pre { background:#0b0b0b; padding:10px; overflow:auto; border:1px solid #222; border-radius:6px; }
+  #preview table { width:100%; border-collapse:collapse; }
+  #preview th, #preview td { border:1px solid #333; padding:6px; }
+  #toc { font-size:14px; margin-bottom:16px; }
+  #toc ul { margin:6px 0 0 0; padding-left:16px; }
+
+  /* 打印为 A4：隐藏工具栏/目录，让内容居中到 182mm */
+  @media print {
+    #toolbar, #toc { display: none !important; }
+    body { background:#fff; color:#000; }
+    #preview { width: 182mm; }     /* 210 - 14*2 */
+    @page { size: A4; margin: 14mm; }
+    *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 </head>
 <body>
 
-<div id="toolbar">
-  <button onclick="downloadMD()">Export .md</button>
-  <button onclick="exportPDF()">Export PDF</button>
-</div>
-
-<textarea id="editor" oninput="updatePreview()">
-# Welcome
+<textarea id="editor" oninput="updatePreview()"
+># Welcome
 Start typing your Markdown here...
 </textarea>
 
-<div id="preview"></div>
+<div id="right">
+  <div id="toolbar">
+    <button onclick="downloadMD()">Export .md</button>
+    <button onclick="exportPDF()">Export PDF</button>
+  </div>
+  <div id="previewWrap">
+    <div id="preview"></div>
+  </div>
+</div>
 
 <script>
-// 让 marked 生成标题 id（与 TOC 对齐）
+/* ---------- Markdown 预览 ---------- */
 marked.setOptions({ mangle:false, headerIds:true });
 
-// 解析 + 预览
 function updatePreview() {
   const src = document.getElementById("editor").value;
-  // 先渲染 markdown 到 DOM 再从 DOM 里读标题做 TOC（保证 id 一致）
   const html = marked.parse(src);
+
+  // 先渲染后取标题 生成 TOC（保证锚点一致）
   const wrap = document.createElement('div');
   wrap.innerHTML = html;
+  const hs = [...wrap.querySelectorAll('h1,h2,h3,h4,h5,h6')];
 
-  // 从已渲染的 DOM 中收集标题
-  const hs = [...wrap.querySelectorAll('h1, h2, h3, h4, h5, h6')];
   let toc = `<div id="toc"><strong>Table of Contents</strong><ul>`;
-  hs.forEach(h => {
-    // 如果某些标题没有 id，兼容性补一个
-    if (!h.id) h.id = h.textContent.trim().toLowerCase().replace(/[^\w\- ]+/g,'').replace(/\s+/g,'-');
+  hs.forEach(h=>{
+    if(!h.id) h.id = h.textContent.trim().toLowerCase()
+      .replace(/[^\w\- ]+/g,'').replace(/\s+/g,'-');
     const level = Number(h.tagName.slice(1));
-    toc += `<li style="margin-left:${(level-1)*10}px"><a href="#${h.id}">${h.textContent}</a></li>`;
+    toc += `<li style="margin-left:${(level-1)*12}px"><a href="#${h.id}">${h.textContent}</a></li>`;
   });
   toc += `</ul></div>`;
 
   document.getElementById("preview").innerHTML = toc + wrap.innerHTML;
 }
+updatePreview();
 
-// —— 导出 .md 保留 —— 
+/* ---------- 导出 .md ---------- */
 function downloadMD() {
   const text = document.getElementById("editor").value;
   const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "document.md";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.href = url; a.download = "document.md";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
-// 方案A：继续用 html2pdf（桌面端 OK，iOS 可能白屏）
-function exportPDF() {
-  updatePreview();
-  const element = document.getElementById('preview');
-  const opt = {
-    margin: 0.5,
-    filename: 'document.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering:true },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-  };
-  html2pdf().set(opt).from(element).save();
-}
-
-// 方案B（更稳的 iOS 兜底）：隐藏 iframe 打印为 PDF
-function exportPDF_iOSSafe() {
-  updatePreview();
+/* ---------- 导出 PDF（iOS/移动端稳） ---------- */
+function exportPDF(){
+  updatePreview(); // 保证最新
   const srcHTML = document.getElementById('preview').innerHTML;
+
   const iframe = document.createElement('iframe');
   Object.assign(iframe.style,{position:'fixed',right:'0',bottom:'0',width:'0',height:'0',border:'0'});
   document.body.appendChild(iframe);
 
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
-  doc.write(`<!doctype html><html><head>
-    <meta charset="utf-8"><title>Export PDF</title>
-    <style>
-      @page { size:A4; margin:14mm; }
-      *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-      body{ font-family:system-ui,-apple-system,Segoe UI,Roboto; }
-      #toc{ margin-bottom:16px; font-size:14px; }
-    </style>
-  </head><body>${srcHTML}
+  doc.write(`<!doctype html>
+<html><head>
+<meta charset="utf-8"><title>Export PDF</title>
+<style>
+  @page { size:A4; margin:14mm; }
+  html,body{ background:#fff; color:#000; }
+  body{ font:12pt/1.5 -apple-system,system-ui,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .sheet{ width:182mm; margin:0 auto; }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  #toc{ display:none !important; } /* PDF 不要目录 */
+  img,svg,canvas,video{ max-width:100% !important; height:auto !important; }
+  table{ width:100%; border-collapse:collapse; }
+  pre,code{ font:10pt/1.45 ui-monospace,Menlo,Consolas,monospace; }
+  h1,h2,h3{ page-break-after:avoid; }
+  p,ul,ol,table,pre{ page-break-inside:avoid; }
+  .page-break{ page-break-before:always; }
+</style>
+</head><body>
+  <div class="sheet">${srcHTML}</div>
   <script>setTimeout(function(){window.focus();window.print();},150);<\/script>
-  </body></html>`);
+</body></html>`);
   doc.close();
 
   const cleanup = () => setTimeout(()=>iframe.remove(),800);
   if ('onafterprint' in iframe.contentWindow) iframe.contentWindow.onafterprint = cleanup; else cleanup();
 }
-
-updatePreview();
 </script>
 </body>
 </html>
