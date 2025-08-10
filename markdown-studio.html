@@ -28,52 +28,84 @@ Start typing your Markdown here...
 <div id="preview"></div>
 
 <script>
+// 让 marked 生成标题 id（与 TOC 对齐）
+marked.setOptions({ mangle:false, headerIds:true });
+
+// 解析 + 预览
 function updatePreview() {
-    const markdownText = document.getElementById("editor").value;
-    document.getElementById("preview").innerHTML = generateTOC(markdownText) + marked.parse(markdownText);
+  const src = document.getElementById("editor").value;
+  // 先渲染 markdown 到 DOM 再从 DOM 里读标题做 TOC（保证 id 一致）
+  const html = marked.parse(src);
+  const wrap = document.createElement('div');
+  wrap.innerHTML = html;
+
+  // 从已渲染的 DOM 中收集标题
+  const hs = [...wrap.querySelectorAll('h1, h2, h3, h4, h5, h6')];
+  let toc = `<div id="toc"><strong>Table of Contents</strong><ul>`;
+  hs.forEach(h => {
+    // 如果某些标题没有 id，兼容性补一个
+    if (!h.id) h.id = h.textContent.trim().toLowerCase().replace(/[^\w\- ]+/g,'').replace(/\s+/g,'-');
+    const level = Number(h.tagName.slice(1));
+    toc += `<li style="margin-left:${(level-1)*10}px"><a href="#${h.id}">${h.textContent}</a></li>`;
+  });
+  toc += `</ul></div>`;
+
+  document.getElementById("preview").innerHTML = toc + wrap.innerHTML;
 }
 
-function generateTOC(md) {
-    const lines = md.split("\n");
-    let toc = "<div id='toc'><strong>Table of Contents</strong><ul>";
-    lines.forEach(line => {
-        const match = line.match(/^(#{1,6})\s+(.*)/);
-        if (match) {
-            const level = match[1].length;
-            const text = match[2];
-            const anchor = text.toLowerCase().replace(/[^
-\w]+/g, "-");
-            toc += `<li style="margin-left:${(level-1)*10}px"><a href="#${anchor}">${text}</a></li>`;
-        }
-    });
-    toc += "</ul></div>";
-    return toc;
-}
-
+// —— 导出 .md 保留 —— 
 function downloadMD() {
-    const text = document.getElementById("editor").value;
-    const blob = new Blob([text], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "document.md";
-    a.click();
-    URL.revokeObjectURL(url);
+  const text = document.getElementById("editor").value;
+  const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "document.md";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-// This is the correct name for the export function
+// 方案A：继续用 html2pdf（桌面端 OK，iOS 可能白屏）
 function exportPDF() {
-    // Ensure preview is up-to-date before exporting
-    updatePreview();
-    const element = document.getElementById('preview');
-    const opt = {
-        margin:       0.5,
-        filename:     'document.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
+  updatePreview();
+  const element = document.getElementById('preview');
+  const opt = {
+    margin: 0.5,
+    filename: 'document.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering:true },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
+
+// 方案B（更稳的 iOS 兜底）：隐藏 iframe 打印为 PDF
+function exportPDF_iOSSafe() {
+  updatePreview();
+  const srcHTML = document.getElementById('preview').innerHTML;
+  const iframe = document.createElement('iframe');
+  Object.assign(iframe.style,{position:'fixed',right:'0',bottom:'0',width:'0',height:'0',border:'0'});
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(`<!doctype html><html><head>
+    <meta charset="utf-8"><title>Export PDF</title>
+    <style>
+      @page { size:A4; margin:14mm; }
+      *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      body{ font-family:system-ui,-apple-system,Segoe UI,Roboto; }
+      #toc{ margin-bottom:16px; font-size:14px; }
+    </style>
+  </head><body>${srcHTML}
+  <script>setTimeout(function(){window.focus();window.print();},150);<\/script>
+  </body></html>`);
+  doc.close();
+
+  const cleanup = () => setTimeout(()=>iframe.remove(),800);
+  if ('onafterprint' in iframe.contentWindow) iframe.contentWindow.onafterprint = cleanup; else cleanup();
 }
 
 updatePreview();
