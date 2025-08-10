@@ -2,195 +2,120 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<title>Markdown Editor</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Markdown Studio</title>
-<!-- libs -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
-  :root{
-    /* 全局缩放（通过滑杆改） */
-    --scale: 1.0;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; height:100vh; display:flex; font-family:-apple-system,system-ui,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
-    background:#fff; color:#111;
-  }
-  textarea{
-    width:50%; padding:12px; border:0; border-right:1px solid #e5e7eb; resize:none; outline:none;
-    font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;
-  }
-  #right{width:50%; display:flex; flex-direction:column; min-width:0}
-  #toolbar{
-    position:sticky; top:0; z-index:10; display:flex; gap:8px; align-items:center;
-    padding:8px 10px; background:#fff; border-bottom:1px solid #e5e7eb;
-  }
-  #toolbar button, #toolbar label{
-    font:14px/1 Arial; padding:8px 10px; border:1px solid #d1d5db; background:#fff; border-radius:6px; cursor:pointer;
-  }
-  #toolbar input[type="range"]{ width:120px; vertical-align:middle }
-  #preview{
-    overflow:auto; padding:18px 22px;
-    transform:scale(var(--scale)); transform-origin: top left;
-    width:calc(100% / var(--scale));  /* 让缩放后仍铺满可视区 */
-  }
+  /* ===== Base layout (white theme) ===== */
+  html, body { height: 100%; margin: 0; background:#fff; color:#000; font-family: -apple-system, system-ui, Segoe UI, Roboto, "PingFang SC","Microsoft YaHei", Arial, sans-serif; }
+  body { display: flex; }
+  textarea { width: 50%; padding: 12px; border: 0; border-right: 1px solid #e5e5e5; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; outline: none; }
+  #preview { width: 50%; padding: 16px 18px; overflow-y: auto; }
+  #toolbar { position: fixed; top: 10px; right: 16px; background: #ffffff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 6px; display: flex; gap: 6px; z-index: 999; }
+  #toolbar button, #toolbar label { font-size: 12px; padding: 6px 10px; background:#fff; border:1px solid #ddd; border-radius:6px; cursor:pointer; }
+  #toolbar input[type="file"]{ display:none; }
 
-  /* 屏幕上的排版（舒适读） */
-  #preview .sheet{ max-width:900px; margin:0 auto }
-  #toc{ font-size:14px; margin:0 0 12px 0; padding:10px 12px; background:#fafafa; border:1px solid #eee; border-radius:8px; }
-  #toc ul{ margin:6px 0 0 18px; padding:0 }
-  #toc li{ margin:4px 0 }
-
-  /* Markdown 样式（屏幕） */
-  #preview h1{ font-size:28px; margin:18px 0 8px }
-  #preview h2{ font-size:20px; margin:16px 0 8px; border-bottom:1px solid #e5e7eb; padding-bottom:6px }
-  #preview h3{ font-size:16px; margin:12px 0 6px }
-  #preview p{ margin:8px 0 }
-  #preview ul{ margin:6px 0 6px 20px }
-  #preview li{ margin:4px 0 }
-  #preview table{ width:100%; border-collapse:collapse; margin:10px 0 }
-  #preview th,#preview td{ border:1px solid #e5e7eb; padding:6px 8px }
-
-  /* —— 打印 / 导出 PDF —— */
-  @page{ size:A4; margin:12mm; }
-  @media print{
-    body{ margin:0; }
-    textarea,#toolbar{ display:none !important; }
-    #preview{ padding:0; transform:none; width:auto }
-    #toc, .toc{ display:none !important; }       /* 导出隐藏目录 */
-    .sheet{ width:186mm; margin:0 auto; }        /* 210-12*2=186mm */
-    /* 紧凑版排版（自动应用更紧的间距与字号） */
-    .compact h1{ font-size:18pt; margin:8pt 0 4pt }
-    .compact h2{ font-size:12pt; margin:6pt 0 3pt; border-bottom:0; }
-    .compact h3{ font-size:10.5pt; margin:5pt 0 2pt }
-    .compact p{ margin:4pt 0; font-size:9.8pt; line-height:1.35 }
-    .compact ul{ margin:3pt 0 3pt 15pt }
-    .compact li{ margin:2pt 0 }
-    .compact table{ font-size:9.5pt; }
-  }
+  /* ===== Content look ===== */
+  #preview h1{ font-size: 28px; margin: 8px 0 10px; }
+  #preview h2{ font-size: 20px; margin: 16px 0 8px; }
+  #preview h3{ font-size: 16px; margin: 14px 0 6px; }
+  #preview p{ margin: 6px 0; }
+  /* bullet 缩进减小一档 */
+  #preview ul, #preview ol { padding-left: 16px; margin: 6px 0; }
+  #preview li { margin: 2px 0; }
+  #preview hr{ border: 0; border-top: 1px solid #eee; margin: 12px 0; }
+  #toc { margin: 0 0 10px; font-size: 14px; }
+  #toc ul { list-style: none; padding-left: 0; margin: 6px 0 0; }
+  #toc li { margin: 2px 0; }
+  #toc a { text-decoration: none; color: #3b82f6; }
+  /* 打印/PDF 时隐藏目录 */
+  @media print { .toc, #toc { display: none !important; } }
 </style>
 </head>
 <body>
 
-<textarea id="editor" placeholder="# Paste your Markdown here…">
-# ENFYS YAN LU
-(在这里粘贴你的 Markdown 简历内容…)
-</textarea>
-
-<div id="right">
-  <div id="toolbar">
-    <button id="btn-md">Export .md</button>
-    <button id="btn-pdf">Export PDF</button>
-    <label style="border:0;padding:0">
-      Compact <input id="chkCompact" type="checkbox" checked />
-    </label>
-    <label style="border:0;padding:0">
-      Scale <input id="rngScale" type="range" min="0.80" max="1.10" step="0.02" value="0.94" />
-      <span id="scaleVal">0.94×</span>
-    </label>
-  </div>
-  <div id="preview"></div>
+<div id="toolbar">
+  <label>
+    Import .md
+    <input id="importer" type="file" accept=".md,.markdown,text/markdown" />
+  </label>
+  <button onclick="downloadMD()">Export .md</button>
+  <button onclick="exportPDF()">Export PDF</button>
 </div>
 
+<textarea id="editor" oninput="updatePreview()">
+# Welcome
+Start typing your Markdown here...
+</textarea>
+
+<div id="preview"></div>
+
 <script>
-  // Marked 配置：保留 heading id，便于锚点
+  // ----- marked config -----
   marked.setOptions({ mangle:false, headerIds:true });
 
-  function render(){
-    const md = document.getElementById('editor').value;
-    const html = marked.parse(md);
+  // ----- render preview + TOC (screen only) -----
+  function updatePreview(){
+    const src = document.getElementById('editor').value;
+    const html = marked.parse(src);
 
-    // 包一层用于打印时的 A4 版芯
+    // wrap once to get headings with stable ids
     const wrap = document.createElement('div');
-    wrap.className = 'sheet';
     wrap.innerHTML = html;
 
-    // 生成 TOC（屏幕可见，导出隐藏）
     const hs = [...wrap.querySelectorAll('h1,h2,h3,h4,h5,h6')];
-    let toc = `<div id="toc"><strong>Table of Contents</strong><ul>`;
-    hs.forEach(h=>{
+    let toc = `<div id="toc" class="toc"><strong>Table of Contents</strong><ul>`;
+    hs.forEach(h => {
       if(!h.id){
-        h.id = h.textContent.trim().toLowerCase()
-          .replace(/[^\w\- ]+/g,'').replace(/\s+/g,'-');
+        h.id = h.textContent.trim().toLowerCase().replace(/[^\w\- ]+/g,'').replace(/\s+/g,'-');
       }
-      const level = +h.tagName.slice(1);
-      toc += `<li style="margin-left:${(level-1)*12}px"><a href="#${h.id}">${h.textContent}</a></li>`;
+      const level = Number(h.tagName.slice(1));
+      toc += `<li style="margin-left:${(level-1)*10}px"><a href="#${h.id}">${h.textContent}</a></li>`;
     });
     toc += `</ul></div>`;
 
-    // 预览区
-    const pv = document.getElementById('preview');
-    pv.innerHTML = toc;
-    pv.appendChild(wrap);
-
-    // 根据 Compact 选项追加类（只影响打印/PDF）
-    if(document.getElementById('chkCompact').checked){
-      wrap.classList.add('compact');
-    }else{
-      wrap.classList.remove('compact');
-    }
+    document.getElementById('preview').innerHTML = toc + wrap.innerHTML;
   }
+  updatePreview();
 
-  // 初次渲染 & 事件
-  render();
-  document.getElementById('editor').addEventListener('input', render);
-  document.getElementById('chkCompact').addEventListener('change', render);
-
-  // 预览缩放（仅屏幕，为了“塞进两页”时预估效果）
-  const rng = document.getElementById('rngScale');
-  const scaleVal = document.getElementById('scaleVal');
-  function applyScale(v){
-    document.documentElement.style.setProperty('--scale', v);
-    scaleVal.textContent = v+'×';
-  }
-  applyScale(rng.value);
-  rng.addEventListener('input', e=>applyScale(e.target.value));
-
-  // 导出 .md
-  document.getElementById('btn-md').addEventListener('click', ()=>{
-    const text = document.getElementById('editor').value;
-    const blob = new Blob([text], {type:'text/markdown;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), {href:url, download:'document.md'});
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  // ----- Import .md -----
+  document.getElementById('importer').addEventListener('change', (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      document.getElementById('editor').value = evt.target.result || '';
+      updatePreview();
+      e.target.value = ''; // reset for next import
+    };
+    reader.readAsText(file, 'utf-8');
   });
 
-  // 导出 PDF（iOS/移动端友好：用 iframe + window.print）
-  document.getElementById('btn-pdf').addEventListener('click', ()=>{
-    render(); // 确保最新
-    const src = document.getElementById('preview').innerHTML;
+  // ----- Export .md -----
+  function downloadMD(){
+    const text = document.getElementById('editor').value;
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'document.md';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ----- Export PDF (iOS-safe print-to-PDF, A4, hide TOC) -----
+  function exportPDF(){
+    updatePreview(); // ensure latest
+    const srcHTML = document.getElementById('preview').innerHTML;
 
     const iframe = document.createElement('iframe');
     Object.assign(iframe.style,{position:'fixed',right:'0',bottom:'0',width:'0',height:'0',border:'0'});
     document.body.appendChild(iframe);
+
     const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-    doc.open(); doc.write(`<!doctype html>
-<html><head><meta charset="utf-8"><title>Export</title>
+    doc.open();
+    doc.write(`<!doctype html>
+<html><head>
+<meta charset="utf-8"><title>Export PDF</title>
 <style>
-  @page{ size:A4; margin:12mm; }
-  html,body{ background:#fff; color:#000; }
-  body{ font:10.8pt/1.4 -apple-system,system-ui,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif; }
-  .sheet{ width:186mm; margin:0 auto; }
-  .toc, #toc{ display:none !important; }            /* 导出隐藏目录 */
-  img,svg,canvas,video{ max-width:100% !important; height:auto !important; }
-  table{ width:100%; border-collapse:collapse }
-  pre,code{ font:9.8pt/1.35 ui-monospace,Menlo,Consolas,monospace }
-  h1{ font-size:18pt; margin:8pt 0 4pt }
-  h2{ font-size:12pt; margin:6pt 0 3pt }
-  h3{ font-size:10.5pt; margin:5pt 0 2pt }
-  p{ margin:4pt 0 }
-  ul{ margin:3pt 0 3pt 14pt }
-  li{ margin:2pt 0 }
-  /* 如还超页，可把 margin 改小到 10mm 或把 p 的 font-size 再降一点 */
-</style>
-</head><body>${src}
-<script>setTimeout(function(){window.focus();window.print();},150);<\/script>
-</body></html>`); doc.close();
-
-    const cleanup = ()=>setTimeout(()=>iframe.remove(),800);
-    if('onafterprint' in iframe.contentWindow) iframe.contentWindow.onafterprint = cleanup; else cleanup();
-  });
-</script>
-</body>
-</html>
+  @page { size: A4; margin: 14mm; }
+  html, body { background:#fff;
