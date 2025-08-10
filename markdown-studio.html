@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>Markdown Studio — 本地编辑/预览/导出</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { --bg:#0f1115; --fg:#e6e6e6; --muted:#8a8f98; --panel:#161a22; --accent:#5ac8fa; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:14px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", Arial;}
+    body.dark { background:var(--bg); color:var(--fg); }
+    header { display:flex; gap:.5rem; align-items:center; padding:.7rem 1rem; background:var(--panel); position:sticky; top:0; z-index:3; }
+    header .title { font-weight:700; letter-spacing:.2px; margin-right:auto; }
+    header button, header label { background:#232937; color:var(--fg); border:1px solid #2f3545; border-radius:8px; padding:.45rem .7rem; cursor:pointer; }
+    header input[type="file"]{ display:none; }
+    header .right { display:flex; gap:.5rem; align-items:center; }
+    .container { display:grid; grid-template-columns: 1fr 1fr; gap:0; height: calc(100vh - 56px); }
+    #editor { width:100%; height:100%; padding:1rem; border:none; outline:none; resize:none; background:#0c1017; color:var(--fg); font:13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    #preview { overflow:auto; padding:1rem 1.25rem; background:#0b0f14; }
+    #preview h1,h2,h3,h4 { margin:1.2em 0 .6em; }
+    #preview pre { background:#0f1420; padding:.9rem; border-radius:8px; overflow:auto; }
+    #status { color:var(--muted); font-size:12px; padding:0 .25rem; }
+    .spl { width:6px; background:#1a2130; cursor:col-resize; }
+    /* Light mode */
+    body.light { background:#fff; color:#111; }
+    body.light header{ background:#f5f7fb; }
+    body.light #editor{ background:#fff; color:#111; border-right:1px solid #eef1f6; }
+    body.light #preview{ background:#fff; }
+    body.light header button, body.light header label { background:#fff; color:#111; border:1px solid #e5e8ef; }
+    /* Print (PDF) */
+    @media print {
+      header, .spl, #editor { display:none !important; }
+      .container { grid-template-columns: 1fr; height:auto; }
+      #preview { background:#fff; color:#111; }
+    }
+  </style>
+  <!-- markdown-it + plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it-anchor@8.6.7/dist/markdownItAnchor.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it-table-of-contents@0.5.2/dist/markdown-it-table-of-contents.min.js"></script>
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+</head>
+<body class="dark">
+  <header>
+    <div class="title">Markdown Studio</div>
+    <button id="newBtn" title="新建">新建</button>
+    <label for="openFile" title="打开 .md 文件">打开</label>
+    <input id="openFile" type="file" accept=".md,.markdown,.txt" />
+    <button id="saveMd" title="导出 .md">导出 .md</button>
+    <button id="printPdf" title="导出 PDF（浏览器打印为PDF）">导出 PDF</button>
+    <div class="right">
+      <button id="tocBtn" title="插入目录">TOC</button>
+      <button id="themeBtn" title="切换主题">🌗</button>
+      <span id="status"></span>
+    </div>
+  </header>
+
+  <div class="container">
+    <textarea id="editor" spellcheck="false" placeholder="在左侧写 Markdown 右侧实时预览 支持导出 .md / PDF"></textarea>
+    <div class="spl" id="splitter" title="拖拽分栏宽度"></div>
+    <article id="preview"></article>
+  </div>
+
+<script>
+  // ---------- init markdown-it ----------
+  const md = window.markdownit({
+    html: true,
+    linkify: true,
+    typographer: true,
+    highlight: function (str, lang) {
+      try { return '<pre><code class="hljs">'+hljs.highlightAuto(str).value+'</code></pre>'; }
+      catch (__) { return '<pre><code>'+md.utils.escapeHtml(str)+'</code></pre>'; }
+    }
+  })
+  .use(window.markdownItAnchor, { permalink: markdownItAnchor.permalink.ariaHidden({}), slugify: s => s.trim().toLowerCase().replace(/\s+/g,'-') })
+  .use(window.markdownitTableOfContents, { includeLevel:[1,2,3], containerClass:'toc' });
+
+  const $ = sel => document.querySelector(sel);
+  const editor = $('#editor');
+  const preview = $('#preview');
+  const status = $('#status');
+
+  const KEY = 'mdstudio.autosave.v1';
+  const THEME = 'mdstudio.theme'; // 'dark' | 'light'
+
+  // ---------- restore theme ----------
+  (function(){
+    const t = localStorage.getItem(THEME) || 'dark';
+    document.body.classList.remove('dark','light');
+    document.body.classList.add(t);
+  })();
+
+  // ---------- render ----------
+  function render() {
+    const src = editor.value;
+    const out = md.render(src);
+    preview.innerHTML = out;
+    status.textContent = 'rendered • ' + new Date().toLocaleTimeString();
+  }
+
+  // ---------- autosave ----------
+  function saveLocal() {
+    localStorage.setItem(KEY, editor.value);
+    status.textContent = 'saved • ' + new Date().toLocaleTimeString();
+  }
+
+  // debounce
+  let t;
+  editor.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => { saveLocal(); render(); }, 200);
+  });
+
+  // ---------- init content ----------
+  const sample = `# 欢迎使用 Markdown Studio
+
+- 左写右看 实时预览  
+- 点击 **导出 .md** 保存源文件  
+- 点击 **导出 PDF** 用浏览器“打印为PDF”  
+- 支持 \`TOC\` 目录、代码高亮、锚点
+
+## 目录
+[[toc]]
+
+## 代码示例
+\`\`\`python
+def hello(name: str) -> str:
+    return f"Hello, {name}"
+\`\`\`
+
+## 分隔线
+---
+
+**Have fun.**`;
+
+  editor.value = localStorage.getItem(KEY) ?? sample;
+  render();
+
+  // ---------- buttons ----------
+  $('#newBtn').onclick = () => {
+    if (editor.value.trim() && !confirm('清空当前内容？')) return;
+    editor.value = '# 新文档\n\n开始写…';
+    render(); saveLocal();
+  };
+
+  $('#openFile').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const text = await f.text();
+    editor.value = text;
+    render(); saveLocal();
+    e.target.value = '';
+  });
+
+  $('#saveMd').onclick = () => {
+    const blob = new Blob([editor.value], {type: 'text/markdown;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const name = (editor.value.match(/^#\s+(.+)$/m)?.[1] || 'document').replace(/[\\/:*?"<>|]/g,'-');
+    a.download = name + '.md';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  $('#printPdf').onclick = () => {
+    // 使用浏览器的打印为 PDF，样式已在 @media print 里处理
+    window.print();
+  };
+
+  $('#themeBtn').onclick = () => {
+    const now = document.body.classList.contains('dark') ? 'light' : 'dark';
+    document.body.classList.remove('dark','light');
+    document.body.classList.add(now);
+    localStorage.setItem(THEME, now);
+  };
+
+  $('#tocBtn').onclick = () => {
+    // 在光标处插入 [[toc]]
+    const pos = editor.selectionStart;
+    const val = editor.value;
+    editor.value = val.slice(0,pos) + '[[toc]]' + val.slice(pos);
+    render(); saveLocal();
+    editor.focus();
+    editor.selectionEnd = editor.selectionStart = pos + 7;
+  };
+
+  // ---------- drag & drop open ----------
+  document.addEventListener('dragover', e => { e.preventDefault(); });
+  document.addEventListener('drop', async e => {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+    const text = await f.text();
+    editor.value = text;
+    render(); saveLocal();
+  });
+
+  // ---------- splitter ----------
+  const splitter = $('#splitter');
+  let dragging = false;
+  splitter.addEventListener('mousedown', () => dragging = true);
+  window.addEventListener('mouseup', () => dragging = false);
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const total = document.body.clientWidth;
+    const leftW = Math.min(Math.max(e.clientX, total*0.2), total*0.8);
+    document.querySelector('.container').style.gridTemplateColumns = leftW + 'px 1fr';
+  });
+
+  // ---------- keyboard shortcuts ----------
+  window.addEventListener('keydown', (e)=>{
+    // Ctrl/Cmd + S 导出 md
+    if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s') {
+      e.preventDefault();
+      $('#saveMd').click();
+    }
+    // Ctrl/Cmd + P 导出 PDF（打印）
+    if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='p') {
+      e.preventDefault();
+      $('#printPdf').click();
+    }
+  });
+</script>
+</body>
+</html>
