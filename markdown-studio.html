@@ -3,113 +3,81 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Markdown Studio</title>
+<title>Markdown Studio (clean)</title>
 
 <!-- Markdown 解析 -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
-  :root { --split: 50%; --gap: 10px; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; height: 100vh; display: flex; font-family: system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #111; color: #eee;
+  *{box-sizing:border-box}
+  body{
+    margin:0; height:100vh; display:flex; background:#fff; color:#000;
+    font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
   }
-  textarea {
-    width: var(--split); padding: 12px; border: 0; outline: none; resize: none;
-    background:#0d0d0d; color:#eee; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  /* 左右两栏 */
+  #editor{
+    width:50%; height:100%; padding:12px; border:0; outline:none; resize:none;
+    font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
   }
-  #right {
-    width: calc(100% - var(--split)); display: flex; flex-direction: column; border-left: 1px solid #222;
-  }
-  #toolbar {
-    display:flex; gap:8px; padding:8px; background:#0d0d0d; border-bottom:1px solid #222; position: sticky; top:0; z-index: 2;
-  }
-  #toolbar button {
-    background:#1a1a1a; color:#ddd; border:1px solid #333; padding:6px 10px; border-radius:6px; cursor:pointer;
-  }
-  #toolbar button:hover { background:#222; }
-  #previewWrap { padding: 12px; overflow:auto; height:100%; }
-  #preview { max-width: 960px; margin: 0 auto; }
+  #right{ width:50%; height:100%; display:flex; flex-direction:column; border-left:1px solid #e5e7eb; }
+  #toolbar{ position:sticky; top:0; z-index:2; display:flex; gap:8px; padding:8px; background:#fff; border-bottom:1px solid #e5e7eb; }
+  #toolbar button{ padding:6px 10px; border:1px solid #e5e7eb; border-radius:8px; background:#fff; cursor:pointer }
+  #toolbar button:hover{ background:#f6f8fa }
+  #previewWrap{ height:100%; overflow:auto; padding:14px }
+  #preview{ max-width:860px; margin:0 auto }  /* 居中一点更好看 */
 
-  /* markdown 基础样式（预览） */
-  #preview h1, #preview h2, #preview h3 { border-bottom: 1px solid #2a2a2a; padding-bottom: 4px; }
-  #preview a { color:#8ab4ff; text-decoration:none; }
-  #preview a:hover { text-decoration:underline; }
-  #preview pre { background:#0b0b0b; padding:10px; overflow:auto; border:1px solid #222; border-radius:6px; }
-  #preview table { width:100%; border-collapse:collapse; }
-  #preview th, #preview td { border:1px solid #333; padding:6px; }
-  #toc { font-size:14px; margin-bottom:16px; }
-  #toc ul { margin:6px 0 0 0; padding-left:16px; }
-
-  /* 打印为 A4：隐藏工具栏/目录，让内容居中到 182mm */
-  @media print {
-    #toolbar, #toc { display: none !important; }
-    body { background:#fff; color:#000; }
-    #preview { width: 182mm; }     /* 210 - 14*2 */
-    @page { size: A4; margin: 14mm; }
-    *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* 打印为 A4：隐藏工具栏，让内容居中到 182mm */
+  @media print{
+    #toolbar{ display:none !important }
+    #preview{ width:182mm }                 /* 210 - 14*2 */
+    @page{ size:A4; margin:14mm }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact }
   }
+
+  /* 可选：手动分页的类名 */
+  .page-break{ page-break-before:always }
 </style>
 </head>
 <body>
 
-<textarea id="editor" oninput="updatePreview()"
-># Welcome
-Start typing your Markdown here...
-</textarea>
+<textarea id="editor" placeholder="# Welcome
+在左侧写 Markdown 右侧预览
+支持导出 .md / PDF（iPhone：打印预览→双指放大→分享→存到“文件”）"></textarea>
 
 <div id="right">
   <div id="toolbar">
-    <button onclick="downloadMD()">Export .md</button>
-    <button onclick="exportPDF()">Export PDF</button>
+    <button id="btnMd">Export .md</button>
+    <button id="btnPdf">Export PDF</button>
   </div>
-  <div id="previewWrap">
-    <div id="preview"></div>
-  </div>
+  <div id="previewWrap"><div id="preview"></div></div>
 </div>
 
 <script>
-/* ---------- Markdown 预览 ---------- */
+/* ---------- 预览（无目录版） ---------- */
 marked.setOptions({ mangle:false, headerIds:true });
 
-function updatePreview() {
-  const src = document.getElementById("editor").value;
-  const html = marked.parse(src);
-
-  // 先渲染后取标题 生成 TOC（保证锚点一致）
-  const wrap = document.createElement('div');
-  wrap.innerHTML = html;
-  const hs = [...wrap.querySelectorAll('h1,h2,h3,h4,h5,h6')];
-
-  let toc = `<div id="toc"><strong>Table of Contents</strong><ul>`;
-  hs.forEach(h=>{
-    if(!h.id) h.id = h.textContent.trim().toLowerCase()
-      .replace(/[^\w\- ]+/g,'').replace(/\s+/g,'-');
-    const level = Number(h.tagName.slice(1));
-    toc += `<li style="margin-left:${(level-1)*12}px"><a href="#${h.id}">${h.textContent}</a></li>`;
-  });
-  toc += `</ul></div>`;
-
-  document.getElementById("preview").innerHTML = toc + wrap.innerHTML;
+function render(){
+  const src = document.getElementById('editor').value;
+  document.getElementById('preview').innerHTML = marked.parse(src || '# ');
 }
-updatePreview();
+document.getElementById('editor').addEventListener('input', render);
+render();
 
 /* ---------- 导出 .md ---------- */
-function downloadMD() {
-  const text = document.getElementById("editor").value;
-  const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+function exportMd(){
+  const text = document.getElementById('editor').value || '';
+  const blob = new Blob([text], {type:'text/markdown;charset=utf-8'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "document.md";
+  const a = document.createElement('a');
+  a.href = url; a.download = 'document.md';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
 /* ---------- 导出 PDF（iOS/移动端稳） ---------- */
-function exportPDF(){
-  updatePreview(); // 保证最新
-  const srcHTML = document.getElementById('preview').innerHTML;
+function exportPdf(){
+  render(); // 确保最新
+  const html = document.getElementById('preview').innerHTML;
 
   const iframe = document.createElement('iframe');
   Object.assign(iframe.style,{position:'fixed',right:'0',bottom:'0',width:'0',height:'0',border:'0'});
@@ -118,24 +86,22 @@ function exportPDF(){
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   doc.write(`<!doctype html>
-<html><head>
-<meta charset="utf-8"><title>Export PDF</title>
+<html><head><meta charset="utf-8"><title>Export PDF</title>
 <style>
-  @page { size:A4; margin:14mm; }
+  @page{ size:A4; margin:14mm }
   html,body{ background:#fff; color:#000; }
   body{ font:12pt/1.5 -apple-system,system-ui,Segoe UI,Roboto,"PingFang SC","Microsoft YaHei",sans-serif; }
   .sheet{ width:182mm; margin:0 auto; }
-  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  #toc{ display:none !important; } /* PDF 不要目录 */
-  img,svg,canvas,video{ max-width:100% !important; height:auto !important; }
-  table{ width:100%; border-collapse:collapse; }
-  pre,code{ font:10pt/1.45 ui-monospace,Menlo,Consolas,monospace; }
-  h1,h2,h3{ page-break-after:avoid; }
-  p,ul,ol,table,pre{ page-break-inside:avoid; }
-  .page-break{ page-break-before:always; }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact }
+  img,svg,canvas,video{ max-width:100% !important; height:auto !important }
+  table{ width:100%; border-collapse:collapse }
+  pre,code{ font:10pt/1.45 ui-monospace,Menlo,Consolas,monospace }
+  h1,h2,h3{ page-break-after:avoid }
+  p,ul,ol,table,pre{ page-break-inside:avoid }
+  .page-break{ page-break-before:always }
 </style>
 </head><body>
-  <div class="sheet">${srcHTML}</div>
+  <div class="sheet">${html}</div>
   <script>setTimeout(function(){window.focus();window.print();},150);<\/script>
 </body></html>`);
   doc.close();
@@ -143,6 +109,10 @@ function exportPDF(){
   const cleanup = () => setTimeout(()=>iframe.remove(),800);
   if ('onafterprint' in iframe.contentWindow) iframe.contentWindow.onafterprint = cleanup; else cleanup();
 }
+
+/* 绑定按钮（避免 inline onClick 作用域问题） */
+document.getElementById('btnMd').addEventListener('click', exportMd);
+document.getElementById('btnPdf').addEventListener('click', exportPdf);
 </script>
 </body>
 </html>
